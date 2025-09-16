@@ -11,6 +11,7 @@ export const colors = {
   grey: '#90CAF9',       // Light Blue Grey
   lightGrey: '#2a3441',  // Lighter grey for borders and dividers
   card: '#193cb8',       // Keeping dark card background
+  error: '#ff4444',      // Error red color
 };
 
 export const buttonStyles = StyleSheet.create({

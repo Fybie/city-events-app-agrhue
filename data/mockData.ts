@@ -189,5 +189,9 @@ export const mockEvents: Event[] = [
 ];
 
 // Current user simulation
-export const currentUser: User = mockUsers[0]; // Max Mustermann
+export const currentUser: User = {
+  ...mockUsers[0], // Max Mustermann
+  favoriteEvents: [], // Start with no favorites
+  pushToken: undefined // Will be set when notifications are initialized
+};
 export const adminUser: User = mockUsers[4]; // Admin User

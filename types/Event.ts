@@ -35,6 +35,8 @@ export interface User {
   isBanned: boolean;
   createdAt: string;
   eventsCreated: number;
+  favoriteEvents?: string[]; // Array of event IDs
+  pushToken?: string; // Push notification token
 }
 
 export interface PastEventReport {

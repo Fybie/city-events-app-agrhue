@@ -19,7 +19,10 @@ const EventsScreen = () => {
     addEvent,
     likeEvent,
     reportEvent,
-    setLocationFilter
+    setLocationFilter,
+    isFavorite,
+    toggleFavorite,
+    hasNotificationPermission
   } = useEvents();
 
   const [isCreateSheetVisible, setIsCreateSheetVisible] = useState(false);
@@ -51,7 +54,15 @@ const EventsScreen = () => {
   return (
     <SafeAreaView style={[commonStyles.container, styles.container]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Events</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Events</Text>
+          {!hasNotificationPermission && (
+            <View style={styles.notificationWarning}>
+              <Icon name="notifications-off-outline" size={16} color={colors.error} />
+              <Text style={styles.notificationWarningText}>Push-Benachrichtigungen deaktiviert</Text>
+            </View>
+          )}
+        </View>
         <TouchableOpacity 
           style={styles.createButton}
           onPress={() => setIsCreateSheetVisible(true)}
@@ -93,6 +104,8 @@ const EventsScreen = () => {
               event={event}
               onPress={() => handleEventPress(event.id)}
               onLike={() => likeEvent(event.id)}
+              onFavorite={() => toggleFavorite(event)}
+              isFavorite={isFavorite(event.id)}
               onReport={() => reportEvent(event.id)}
             />
           ))
@@ -123,10 +136,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.grey + '30',
   },
+  headerLeft: {
+    flex: 1,
+  },
   headerTitle: {
     color: colors.text,
     fontSize: 24,
     fontWeight: '700',
+  },
+  notificationWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  notificationWarningText: {
+    color: colors.error,
+    fontSize: 12,
+    marginLeft: 4,
   },
   createButton: {
     backgroundColor: colors.primary,

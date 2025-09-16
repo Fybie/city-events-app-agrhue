@@ -10,7 +10,15 @@ import Icon from '../../components/Icon';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { events, likeEvent, addComment, reportEvent } = useEvents();
+  const { 
+    events, 
+    likeEvent, 
+    addComment, 
+    reportEvent, 
+    isFavorite, 
+    toggleFavorite,
+    hasNotificationPermission 
+  } = useEvents();
   const [commentText, setCommentText] = useState('');
   
   const event = events.find(e => e.id === id);
@@ -86,9 +94,24 @@ export default function EventDetailScreen() {
           <Icon name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Event Details</Text>
-        <TouchableOpacity onPress={handleReport}>
-          <Icon name="flag-outline" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.headerActionButton}
+            onPress={() => toggleFavorite(event)}
+          >
+            <Icon 
+              name={isFavorite(event.id) ? "star" : "star-outline"} 
+              size={24} 
+              color={isFavorite(event.id) ? colors.primary : colors.text} 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerActionButton}
+            onPress={handleReport}
+          >
+            <Icon name="flag-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -131,7 +154,46 @@ export default function EventDetailScreen() {
               <Icon name="chatbubble-outline" size={24} color={colors.accent} />
               <Text style={styles.actionText}>{event.comments.length} Kommentare</Text>
             </View>
+
+            <TouchableOpacity 
+              style={[
+                styles.actionButton, 
+                isFavorite(event.id) && styles.favoriteActionButton
+              ]}
+              onPress={() => toggleFavorite(event)}
+            >
+              <Icon 
+                name={isFavorite(event.id) ? "star" : "star-outline"} 
+                size={24} 
+                color={isFavorite(event.id) ? colors.primary : colors.accent} 
+              />
+              <Text style={[
+                styles.actionText,
+                isFavorite(event.id) && styles.favoriteActionText
+              ]}>
+                {isFavorite(event.id) ? 'Favorit' : 'Favorisieren'}
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          {isFavorite(event.id) && (
+            <View style={styles.favoriteNotification}>
+              <Icon 
+                name={hasNotificationPermission ? "notifications" : "notifications-off"} 
+                size={16} 
+                color={hasNotificationPermission ? colors.primary : colors.error} 
+              />
+              <Text style={[
+                styles.favoriteNotificationText,
+                !hasNotificationPermission && styles.favoriteNotificationError
+              ]}>
+                {hasNotificationPermission 
+                  ? 'Du erhältst eine Benachrichtigung vor dem Event'
+                  : 'Push-Benachrichtigungen sind deaktiviert'
+                }
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.commentsSection}>
@@ -192,6 +254,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 18,
     fontWeight: '600',
+  },
+  headerActions: {
+    flexDirection: 'row',
+  },
+  headerActionButton: {
+    marginLeft: 16,
   },
   content: {
     flex: 1,
@@ -269,6 +337,7 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: 16,
   },
   actionButton: {
     flexDirection: 'row',
@@ -283,6 +352,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 8,
     fontWeight: '600',
+  },
+  favoriteActionButton: {
+    backgroundColor: colors.primary + '20',
+  },
+  favoriteActionText: {
+    color: colors.primary,
+  },
+  favoriteNotification: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary + '20',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  favoriteNotificationText: {
+    color: colors.primary,
+    fontSize: 12,
+    marginLeft: 8,
+    flex: 1,
+  },
+  favoriteNotificationError: {
+    color: colors.error,
   },
   commentsSection: {
     padding: 20,

@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react';
 import { Event, Comment, User } from '../types/Event';
 import { mockEvents, mockUsers, currentUser } from '../data/mockData';
+import { useFavorites } from './useFavorites';
 
 export const useEvents = () => {
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [loading, setLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const favorites = useFavorites();
 
   // Get unique cities from all events
   const getAvailableLocations = () => {
@@ -113,6 +115,12 @@ export const useEvents = () => {
     banUser,
     getEventsByUser,
     getReportedEvents,
-    setLocationFilter
+    setLocationFilter,
+    // Favorites functionality
+    favorites: favorites.favoriteEvents,
+    isFavorite: favorites.isFavorite,
+    toggleFavorite: favorites.toggleFavorite,
+    getFavoriteEvents: () => favorites.getFavoriteEvents(events),
+    hasNotificationPermission: favorites.hasNotificationPermission
   };
 };

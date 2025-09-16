@@ -9,6 +9,8 @@ interface EventCardProps {
   event: Event;
   onPress: () => void;
   onLike: () => void;
+  onFavorite?: () => void;
+  isFavorite?: boolean;
   showActions?: boolean;
   onReport?: () => void;
   onDelete?: () => void;
@@ -18,6 +20,8 @@ const EventCard: React.FC<EventCardProps> = ({
   event,
   onPress,
   onLike,
+  onFavorite,
+  isFavorite = false,
   showActions = true,
   onReport,
   onDelete
@@ -83,6 +87,16 @@ const EventCard: React.FC<EventCardProps> = ({
               <Icon name="chatbubble-outline" size={20} color={colors.text} />
               <Text style={styles.actionText}>{event.comments.length}</Text>
             </TouchableOpacity>
+
+            {onFavorite && (
+              <TouchableOpacity style={styles.actionButton} onPress={onFavorite}>
+                <Icon 
+                  name={isFavorite ? "star" : "star-outline"} 
+                  size={20} 
+                  color={isFavorite ? colors.primary : colors.text} 
+                />
+              </TouchableOpacity>
+            )}
 
             <View style={styles.actionButtons}>
               {onReport && (

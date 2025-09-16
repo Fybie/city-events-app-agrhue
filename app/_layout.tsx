@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { setupErrorLogging } from '../utils/errorLogger';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useNotificationListener } from '../utils/notificationListener';
 
 const STORAGE_KEY = 'emulated_device';
 
@@ -11,6 +12,9 @@ export default function RootLayout() {
   const actualInsets = useSafeAreaInsets();
   const { emulate } = useGlobalSearchParams<{ emulate?: string }>();
   const [storedEmulate, setStoredEmulate] = useState<string | null>(null);
+  
+  // Set up notification listeners
+  useNotificationListener();
 
   useEffect(() => {
     // Set up global error logging

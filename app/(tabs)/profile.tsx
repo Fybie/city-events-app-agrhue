@@ -9,10 +9,19 @@ import EventCard from '../../components/EventCard';
 import Icon from '../../components/Icon';
 
 export default function ProfileScreen() {
-  const { events, getEventsByUser, deleteEvent } = useEvents();
-  const [activeTab, setActiveTab] = useState<'events' | 'settings'>('events');
+  const { 
+    events, 
+    getEventsByUser, 
+    deleteEvent, 
+    getFavoriteEvents, 
+    isFavorite, 
+    toggleFavorite,
+    hasNotificationPermission 
+  } = useEvents();
+  const [activeTab, setActiveTab] = useState<'events' | 'favorites' | 'settings'>('events');
   
   const userEvents = getEventsByUser(currentUser.id);
+  const favoriteEvents = getFavoriteEvents();
 
   const handleDeleteEvent = (eventId: string) => {
     Alert.alert(
@@ -43,7 +52,7 @@ export default function ProfileScreen() {
             <Text style={styles.userName}>{currentUser.name}</Text>
             <Text style={styles.userCity}>{currentUser.city}</Text>
             <Text style={styles.userStats}>
-              {userEvents.length} Events erstellt
+              {userEvents.length} Events erstellt • {favoriteEvents.length} Favoriten
             </Text>
           </View>
         </View>
@@ -56,6 +65,14 @@ export default function ProfileScreen() {
         >
           <Text style={[styles.tabText, activeTab === 'events' && styles.activeTabText]}>
             Meine Events
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
+          onPress={() => setActiveTab('favorites')}
+        >
+          <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
+            Favoriten
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -90,12 +107,73 @@ export default function ProfileScreen() {
               />
             ))
           )
+        ) : activeTab === 'favorites' ? (
+          favoriteEvents.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name="star-outline" size={64} color={colors.grey} />
+              <Text style={styles.emptyText}>Keine Favoriten</Text>
+              <Text style={styles.emptySubtext}>
+                Markiere Events als Favoriten, um Push-Benachrichtigungen zu erhalten!
+              </Text>
+              {!hasNotificationPermission && (
+                <View style={styles.notificationHint}>
+                  <Icon name="notifications-off-outline" size={20} color={colors.error} />
+                  <Text style={styles.notificationHintText}>
+                    Push-Benachrichtigungen sind deaktiviert. Aktiviere sie in den Einstellungen.
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <>
+              {!hasNotificationPermission && (
+                <View style={styles.notificationBanner}>
+                  <Icon name="notifications-off-outline" size={20} color={colors.error} />
+                  <Text style={styles.notificationBannerText}>
+                    Push-Benachrichtigungen deaktiviert - keine Erinnerungen für Favoriten
+                  </Text>
+                </View>
+              )}
+              {favoriteEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onPress={() => console.log('Event details:', event.id)}
+                  onLike={() => console.log('Like favorite event')}
+                  onFavorite={() => toggleFavorite(event)}
+                  isFavorite={isFavorite(event.id)}
+                />
+              ))}
+            </>
+          )
         ) : (
           <View style={styles.settingsContainer}>
-            <TouchableOpacity style={styles.settingItem}>
-              <Icon name="notifications-outline" size={24} color={colors.text} />
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => {
+                Alert.alert(
+                  'Benachrichtigungen',
+                  hasNotificationPermission 
+                    ? 'Push-Benachrichtigungen sind aktiviert. Du erhältst Erinnerungen für deine favorisierten Events.'
+                    : 'Push-Benachrichtigungen sind deaktiviert. Aktiviere sie in den Geräteeinstellungen, um Erinnerungen für favorisierte Events zu erhalten.',
+                  [{ text: 'OK' }]
+                );
+              }}
+            >
+              <Icon 
+                name={hasNotificationPermission ? "notifications" : "notifications-off"} 
+                size={24} 
+                color={hasNotificationPermission ? colors.text : colors.error} 
+              />
               <Text style={styles.settingText}>Benachrichtigungen</Text>
-              <Icon name="chevron-forward" size={20} color={colors.grey} />
+              <View style={styles.notificationStatus}>
+                <Text style={[
+                  styles.notificationStatusText,
+                  hasNotificationPermission ? styles.notificationEnabled : styles.notificationDisabled
+                ]}>
+                  {hasNotificationPermission ? 'Aktiviert' : 'Deaktiviert'}
+                </Text>
+              </View>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.settingItem}>
@@ -226,5 +304,47 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
     marginLeft: 12,
+  },
+  notificationHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.error + '20',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    marginHorizontal: 20,
+  },
+  notificationHintText: {
+    color: colors.error,
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
+  },
+  notificationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.error + '20',
+    padding: 12,
+    borderRadius: 8,
+    margin: 16,
+  },
+  notificationBannerText: {
+    color: colors.error,
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
+  },
+  notificationStatus: {
+    marginLeft: 'auto',
+  },
+  notificationStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  notificationEnabled: {
+    color: colors.accent,
+  },
+  notificationDisabled: {
+    color: colors.error,
   },
 });
