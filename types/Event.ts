@@ -13,6 +13,7 @@ export interface Event {
   likes: number;
   comments: Comment[];
   isReported?: boolean;
+  image?: string; // Added image support
 }
 
 export interface Comment {
@@ -34,4 +35,20 @@ export interface User {
   isBanned: boolean;
   createdAt: string;
   eventsCreated: number;
+}
+
+export interface PastEventReport {
+  id: string;
+  title: string;
+  description: string;
+  eventDate: string;
+  location: string;
+  city: string;
+  author: string;
+  authorId: string;
+  createdAt: string;
+  images?: string[];
+  likes: number;
+  comments: Comment[];
+  isReported?: boolean;
 }

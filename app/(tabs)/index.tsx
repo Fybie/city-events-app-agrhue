@@ -3,48 +3,53 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { commonStyles, colors } from '../../styles/commonStyles';
 import { useEvents } from '../../hooks/useEvents';
+import { commonStyles, colors } from '../../styles/commonStyles';
+import Icon from '../../components/Icon';
 import EventCard from '../../components/EventCard';
 import CreateEventSheet from '../../components/CreateEventSheet';
 import LocationFilter from '../../components/LocationFilter';
-import Icon from '../../components/Icon';
 
-export default function EventsScreen() {
-  const { 
-    events, 
-    loading, 
-    selectedLocation, 
-    availableLocations, 
-    addEvent, 
-    likeEvent, 
-    reportEvent, 
-    setLocationFilter 
+const EventsScreen = () => {
+  const {
+    events,
+    loading,
+    selectedLocation,
+    availableLocations,
+    addEvent,
+    likeEvent,
+    reportEvent,
+    setLocationFilter
   } = useEvents();
+
   const [isCreateSheetVisible, setIsCreateSheetVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = () => {
-    console.log('Refreshing events...');
+    console.log('Refreshing events');
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    // Simulate refresh
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   };
 
   const handleEventPress = (eventId: string) => {
-    console.log('Opening event details:', eventId);
+    console.log('Opening event:', eventId);
     router.push(`/event/${eventId}`);
   };
 
   const handleCreateEvent = (eventData: any) => {
+    console.log('Creating event:', eventData);
     addEvent(eventData);
   };
 
   const handleLocationChange = (location: string) => {
-    setLocationFilter(location);
+    setLocationFilter(location === 'Alle Orte' ? 'all' : location);
   };
 
   return (
-    <SafeAreaView style={commonStyles.wrapper}>
+    <SafeAreaView style={[commonStyles.container, styles.container]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Events</Text>
         <TouchableOpacity 
@@ -55,54 +60,45 @@ export default function EventsScreen() {
         </TouchableOpacity>
       </View>
 
-      <LocationFilter
-        selectedLocation={selectedLocation}
-        onLocationChange={handleLocationChange}
-        availableLocations={availableLocations}
-      />
+      <View style={styles.filterContainer}>
+        <LocationFilter
+          selectedLocation={selectedLocation === 'all' ? 'Alle Orte' : selectedLocation}
+          onLocationChange={handleLocationChange}
+          availableLocations={['Alle Orte', ...availableLocations]}
+        />
+      </View>
 
       <ScrollView
-        style={styles.scrollView}
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        showsVerticalScrollIndicator={false}
       >
         {events.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="calendar-outline" size={64} color={colors.grey} />
-            <Text style={styles.emptyText}>
-              {selectedLocation === 'all' 
-                ? 'Noch keine Events vorhanden' 
-                : `Keine Events in ${selectedLocation}`
-              }
-            </Text>
-            <Text style={styles.emptySubtext}>
-              {selectedLocation === 'all'
-                ? 'Erstelle das erste Event für deine Stadt!'
-                : `Erstelle das erste Event für ${selectedLocation}!`
+            <Text style={styles.emptyStateTitle}>Keine Events gefunden</Text>
+            <Text style={styles.emptyStateText}>
+              {selectedLocation !== 'all'
+                ? 'Keine Events in dieser Stadt gefunden. Versuchen Sie einen anderen Ort oder erstellen Sie das erste Event!'
+                : 'Seien Sie der Erste, der ein Event erstellt!'
               }
             </Text>
           </View>
         ) : (
-          <>
-            <View style={styles.resultsHeader}>
-              <Text style={styles.resultsText}>
-                {events.length} Event{events.length !== 1 ? 's' : ''} 
-                {selectedLocation !== 'all' && ` in ${selectedLocation}`}
-              </Text>
-            </View>
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                onPress={() => handleEventPress(event.id)}
-                onLike={() => likeEvent(event.id)}
-                onReport={() => reportEvent(event.id)}
-              />
-            ))}
-          </>
+          events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              onPress={() => handleEventPress(event.id)}
+              onLike={() => likeEvent(event.id)}
+              onReport={() => reportEvent(event.id)}
+            />
+          ))
         )}
+
+        <View style={styles.bottomSpacing} />
       </ScrollView>
 
       <CreateEventSheet
@@ -112,17 +108,20 @@ export default function EventsScreen() {
       />
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.background,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.grey,
+    borderBottomColor: colors.grey + '30',
   },
   headerTitle: {
     color: colors.text,
@@ -131,41 +130,44 @@ const styles = StyleSheet.create({
   },
   createButton: {
     backgroundColor: colors.primary,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  scrollView: {
-    flex: 1,
-  },
-  resultsHeader: {
-    paddingHorizontal: 20,
+  filterContainer: {
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.grey + '30',
   },
-  resultsText: {
-    color: colors.grey,
-    fontSize: 14,
-    fontWeight: '500',
+  content: {
+    flex: 1,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 80,
+    paddingHorizontal: 32,
+    paddingVertical: 64,
   },
-  emptyText: {
+  emptyStateTitle: {
     color: colors.text,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     marginTop: 16,
-    textAlign: 'center',
+    marginBottom: 8,
   },
-  emptySubtext: {
+  emptyStateText: {
     color: colors.grey,
-    fontSize: 14,
-    marginTop: 8,
+    fontSize: 16,
     textAlign: 'center',
+    lineHeight: 24,
+  },
+  bottomSpacing: {
+    height: 100,
   },
 });
+
+export default EventsScreen;

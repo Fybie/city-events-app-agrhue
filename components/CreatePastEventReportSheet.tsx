@@ -7,37 +7,35 @@ import Icon from './Icon';
 import { currentUser } from '../data/mockData';
 import * as ImagePicker from 'expo-image-picker';
 
-interface CreateEventSheetProps {
+interface CreatePastEventReportSheetProps {
   isVisible: boolean;
   onClose: () => void;
-  onCreateEvent: (event: {
+  onCreateReport: (report: {
     title: string;
     description: string;
-    date: string;
-    time: string;
+    eventDate: string;
     location: string;
     city: string;
     author: string;
     authorId: string;
-    image?: string;
+    images?: string[];
   }) => void;
 }
 
-const CreateEventSheet: React.FC<CreateEventSheetProps> = ({
+const CreatePastEventReportSheet: React.FC<CreatePastEventReportSheetProps> = ({
   isVisible,
   onClose,
-  onCreateEvent
+  onCreateReport
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [eventDate, setEventDate] = useState('');
   const [location, setLocation] = useState('');
   const [city, setCity] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
-  const pickImage = async () => {
-    console.log('Opening image picker');
+  const pickImages = async () => {
+    console.log('Opening image picker for multiple images');
     
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
@@ -55,43 +53,41 @@ const CreateEventSheet: React.FC<CreateEventSheetProps> = ({
 
     if (!result.canceled && result.assets[0]) {
       console.log('Image selected:', result.assets[0].uri);
-      setSelectedImage(result.assets[0].uri);
+      setSelectedImages(prev => [...prev, result.assets[0].uri]);
     }
   };
 
-  const removeImage = () => {
-    console.log('Removing selected image');
-    setSelectedImage(null);
+  const removeImage = (index: number) => {
+    console.log('Removing image at index:', index);
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
-    if (!title.trim() || !description.trim() || !date.trim() || !time.trim() || !location.trim() || !city.trim()) {
+    if (!title.trim() || !description.trim() || !eventDate.trim() || !location.trim() || !city.trim()) {
       Alert.alert('Fehler', 'Bitte füllen Sie alle Felder aus.');
       return;
     }
 
-    console.log('Creating new event:', title);
+    console.log('Creating new past event report:', title);
     
-    onCreateEvent({
+    onCreateReport({
       title: title.trim(),
       description: description.trim(),
-      date: date.trim(),
-      time: time.trim(),
+      eventDate: eventDate.trim(),
       location: location.trim(),
       city: city.trim(),
       author: currentUser.name,
       authorId: currentUser.id,
-      image: selectedImage || undefined
+      images: selectedImages.length > 0 ? selectedImages : undefined
     });
 
     // Reset form
     setTitle('');
     setDescription('');
-    setDate('');
-    setTime('');
+    setEventDate('');
     setLocation('');
     setCity('');
-    setSelectedImage(null);
+    setSelectedImages([]);
     
     onClose();
   };
@@ -100,7 +96,7 @@ const CreateEventSheet: React.FC<CreateEventSheetProps> = ({
     <SimpleBottomSheet isVisible={isVisible} onClose={onClose}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Neues Event erstellen</Text>
+          <Text style={styles.title}>Event-Bericht erstellen</Text>
           <TouchableOpacity onPress={onClose}>
             <Icon name="close" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -113,7 +109,7 @@ const CreateEventSheet: React.FC<CreateEventSheetProps> = ({
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="Event-Titel eingeben..."
+              placeholder="Wie war das Event?"
               placeholderTextColor={colors.grey}
             />
           </View>
@@ -124,52 +120,47 @@ const CreateEventSheet: React.FC<CreateEventSheetProps> = ({
               style={[styles.input, styles.textArea]}
               value={description}
               onChangeText={setDescription}
-              placeholder="Beschreibung des Events..."
+              placeholder="Erzählen Sie von Ihren Erfahrungen..."
               placeholderTextColor={colors.grey}
               multiline
-              numberOfLines={4}
+              numberOfLines={6}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Event-Bild</Text>
-            {selectedImage ? (
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
-                <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
-                  <Icon name="close" size={20} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
-                <Icon name="camera-outline" size={24} color={colors.text} />
-                <Text style={styles.imagePickerText}>Bild hinzufügen</Text>
-              </TouchableOpacity>
+            <Text style={styles.label}>Bilder</Text>
+            {selectedImages.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesContainer}>
+                {selectedImages.map((image, index) => (
+                  <View key={index} style={styles.imageContainer}>
+                    <Image source={{ uri: image }} style={styles.selectedImage} />
+                    <TouchableOpacity 
+                      style={styles.removeImageButton} 
+                      onPress={() => removeImage(index)}
+                    >
+                      <Icon name="close" size={16} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
             )}
+            <TouchableOpacity style={styles.imagePickerButton} onPress={pickImages}>
+              <Icon name="camera-outline" size={24} color={colors.text} />
+              <Text style={styles.imagePickerText}>
+                {selectedImages.length > 0 ? 'Weiteres Bild hinzufügen' : 'Bilder hinzufügen'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.label}>Datum</Text>
-              <TextInput
-                style={styles.input}
-                value={date}
-                onChangeText={setDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.grey}
-              />
-            </View>
-
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-              <Text style={styles.label}>Uhrzeit</Text>
-              <TextInput
-                style={styles.input}
-                value={time}
-                onChangeText={setTime}
-                placeholder="HH:MM"
-                placeholderTextColor={colors.grey}
-              />
-            </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Event-Datum</Text>
+            <TextInput
+              style={styles.input}
+              value={eventDate}
+              onChangeText={setEventDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.grey}
+            />
           </View>
 
           <View style={styles.inputGroup}>
@@ -178,7 +169,7 @@ const CreateEventSheet: React.FC<CreateEventSheetProps> = ({
               style={styles.input}
               value={location}
               onChangeText={setLocation}
-              placeholder="Veranstaltungsort..."
+              placeholder="Wo fand das Event statt?"
               placeholderTextColor={colors.grey}
             />
           </View>
@@ -195,7 +186,7 @@ const CreateEventSheet: React.FC<CreateEventSheetProps> = ({
           </View>
 
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Event erstellen</Text>
+            <Text style={styles.submitButtonText}>Bericht erstellen</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -241,30 +232,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   textArea: {
-    height: 100,
+    height: 120,
     textAlignVertical: 'top',
   },
-  row: {
-    flexDirection: 'row',
+  imagesContainer: {
+    marginBottom: 12,
   },
   imageContainer: {
     position: 'relative',
-    marginBottom: 8,
+    marginRight: 12,
   },
   selectedImage: {
-    width: '100%',
-    height: 200,
+    width: 100,
+    height: 80,
     borderRadius: 8,
     resizeMode: 'cover',
   },
   removeImageButton: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: 16,
-    width: 32,
-    height: 32,
+    top: -8,
+    right: -8,
+    backgroundColor: colors.error,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -273,7 +264,7 @@ const styles = StyleSheet.create({
     borderColor: colors.grey,
     borderWidth: 1,
     borderRadius: 8,
-    padding: 20,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -297,4 +288,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateEventSheet;
+export default CreatePastEventReportSheet;
