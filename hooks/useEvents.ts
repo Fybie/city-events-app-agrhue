@@ -7,6 +7,21 @@ export const useEvents = () => {
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [loading, setLoading] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+
+  // Get unique cities from all events
+  const getAvailableLocations = () => {
+    const cities = [...new Set(events.map(event => event.city))];
+    return cities.sort();
+  };
+
+  // Filter events based on selected location
+  const getFilteredEvents = () => {
+    if (selectedLocation === 'all') {
+      return events;
+    }
+    return events.filter(event => event.city === selectedLocation);
+  };
 
   const addEvent = (newEvent: Omit<Event, 'id' | 'createdAt' | 'likes' | 'comments'>) => {
     console.log('Adding new event:', newEvent.title);
@@ -78,10 +93,18 @@ export const useEvents = () => {
     return events.filter(event => event.isReported);
   };
 
+  const setLocationFilter = (location: string) => {
+    console.log('Setting location filter to:', location);
+    setSelectedLocation(location);
+  };
+
   return {
-    events,
+    events: getFilteredEvents(),
+    allEvents: events,
     users,
     loading,
+    selectedLocation,
+    availableLocations: getAvailableLocations(),
     addEvent,
     deleteEvent,
     likeEvent,
@@ -89,6 +112,7 @@ export const useEvents = () => {
     reportEvent,
     banUser,
     getEventsByUser,
-    getReportedEvents
+    getReportedEvents,
+    setLocationFilter
   };
 };

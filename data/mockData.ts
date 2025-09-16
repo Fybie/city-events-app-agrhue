@@ -23,6 +23,26 @@ export const mockUsers: User[] = [
     eventsCreated: 2
   },
   {
+    id: '3',
+    name: 'Peter Weber',
+    email: 'peter@example.com',
+    city: 'Hamburg',
+    isAdmin: false,
+    isBanned: false,
+    createdAt: '2024-01-03',
+    eventsCreated: 1
+  },
+  {
+    id: '4',
+    name: 'Lisa Müller',
+    email: 'lisa@example.com',
+    city: 'Köln',
+    isAdmin: false,
+    isBanned: false,
+    createdAt: '2024-01-04',
+    eventsCreated: 2
+  },
+  {
     id: 'admin',
     name: 'Admin User',
     email: 'admin@example.com',
@@ -90,8 +110,8 @@ export const mockEvents: Event[] = [
     time: '09:00',
     location: 'Marktplatz',
     city: 'Hamburg',
-    author: 'Max Mustermann',
-    authorId: '1',
+    author: 'Peter Weber',
+    authorId: '3',
     createdAt: '2024-01-13T12:00:00Z',
     likes: 12,
     comments: []
@@ -104,14 +124,70 @@ export const mockEvents: Event[] = [
     time: '11:00',
     location: 'Rheinufer',
     city: 'Köln',
-    author: 'Anna Schmidt',
-    authorId: '2',
+    author: 'Lisa Müller',
+    authorId: '4',
     createdAt: '2024-01-12T08:45:00Z',
     likes: 31,
+    comments: []
+  },
+  {
+    id: '5',
+    title: 'Weihnachtsmarkt',
+    description: 'Traditioneller Weihnachtsmarkt mit Glühwein, gerösteten Mandeln und Kunsthandwerk.',
+    date: '2024-12-01',
+    time: '16:00',
+    location: 'Marienplatz',
+    city: 'München',
+    author: 'Anna Schmidt',
+    authorId: '2',
+    createdAt: '2024-01-11T14:20:00Z',
+    likes: 42,
+    comments: []
+  },
+  {
+    id: '6',
+    title: 'Hafenfest Hamburg',
+    description: 'Großes Hafenfest mit Schiffsparade, Feuerwerk und maritimen Aktivitäten.',
+    date: '2024-05-10',
+    time: '12:00',
+    location: 'Landungsbrücken',
+    city: 'Hamburg',
+    author: 'Peter Weber',
+    authorId: '3',
+    createdAt: '2024-01-10T16:45:00Z',
+    likes: 38,
+    comments: []
+  },
+  {
+    id: '7',
+    title: 'Karneval Straßenfest',
+    description: 'Buntes Straßenfest mit Kostümen, Musik und kölschen Spezialitäten.',
+    date: '2024-02-12',
+    time: '11:00',
+    location: 'Heumarkt',
+    city: 'Köln',
+    author: 'Lisa Müller',
+    authorId: '4',
+    createdAt: '2024-01-09T13:15:00Z',
+    likes: 29,
+    comments: []
+  },
+  {
+    id: '8',
+    title: 'Lange Nacht der Museen',
+    description: 'Über 100 Museen öffnen ihre Türen für eine besondere Nacht der Kultur.',
+    date: '2024-08-24',
+    time: '18:00',
+    location: 'Museumsinsel',
+    city: 'Berlin',
+    author: 'Max Mustermann',
+    authorId: '1',
+    createdAt: '2024-01-08T11:30:00Z',
+    likes: 56,
     comments: []
   }
 ];
 
 // Current user simulation
 export const currentUser: User = mockUsers[0]; // Max Mustermann
-export const adminUser: User = mockUsers[2]; // Admin User
+export const adminUser: User = mockUsers[4]; // Admin User

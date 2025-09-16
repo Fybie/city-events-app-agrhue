@@ -7,10 +7,20 @@ import { commonStyles, colors } from '../../styles/commonStyles';
 import { useEvents } from '../../hooks/useEvents';
 import EventCard from '../../components/EventCard';
 import CreateEventSheet from '../../components/CreateEventSheet';
+import LocationFilter from '../../components/LocationFilter';
 import Icon from '../../components/Icon';
 
 export default function EventsScreen() {
-  const { events, loading, addEvent, likeEvent, reportEvent } = useEvents();
+  const { 
+    events, 
+    loading, 
+    selectedLocation, 
+    availableLocations, 
+    addEvent, 
+    likeEvent, 
+    reportEvent, 
+    setLocationFilter 
+  } = useEvents();
   const [isCreateSheetVisible, setIsCreateSheetVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -29,6 +39,10 @@ export default function EventsScreen() {
     addEvent(eventData);
   };
 
+  const handleLocationChange = (location: string) => {
+    setLocationFilter(location);
+  };
+
   return (
     <SafeAreaView style={commonStyles.wrapper}>
       <View style={styles.header}>
@@ -41,6 +55,12 @@ export default function EventsScreen() {
         </TouchableOpacity>
       </View>
 
+      <LocationFilter
+        selectedLocation={selectedLocation}
+        onLocationChange={handleLocationChange}
+        availableLocations={availableLocations}
+      />
+
       <ScrollView
         style={styles.scrollView}
         refreshControl={
@@ -51,19 +71,37 @@ export default function EventsScreen() {
         {events.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="calendar-outline" size={64} color={colors.grey} />
-            <Text style={styles.emptyText}>Noch keine Events vorhanden</Text>
-            <Text style={styles.emptySubtext}>Erstelle das erste Event für deine Stadt!</Text>
+            <Text style={styles.emptyText}>
+              {selectedLocation === 'all' 
+                ? 'Noch keine Events vorhanden' 
+                : `Keine Events in ${selectedLocation}`
+              }
+            </Text>
+            <Text style={styles.emptySubtext}>
+              {selectedLocation === 'all'
+                ? 'Erstelle das erste Event für deine Stadt!'
+                : `Erstelle das erste Event für ${selectedLocation}!`
+              }
+            </Text>
           </View>
         ) : (
-          events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onPress={() => handleEventPress(event.id)}
-              onLike={() => likeEvent(event.id)}
-              onReport={() => reportEvent(event.id)}
-            />
-          ))
+          <>
+            <View style={styles.resultsHeader}>
+              <Text style={styles.resultsText}>
+                {events.length} Event{events.length !== 1 ? 's' : ''} 
+                {selectedLocation !== 'all' && ` in ${selectedLocation}`}
+              </Text>
+            </View>
+            {events.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onPress={() => handleEventPress(event.id)}
+                onLike={() => likeEvent(event.id)}
+                onReport={() => reportEvent(event.id)}
+              />
+            ))}
+          </>
         )}
       </ScrollView>
 
@@ -101,6 +139,15 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  resultsHeader: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  resultsText: {
+    color: colors.grey,
+    fontSize: 14,
+    fontWeight: '500',
   },
   emptyState: {
     flex: 1,
