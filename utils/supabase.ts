@@ -19,8 +19,8 @@ export const getSupabase = () => {
   if (!supabase) {
     console.log('Supabase not initialized');
     Alert.alert(
-      'Supabase nicht verbunden',
-      'Bitte verbinden Sie sich zuerst mit Ihrem Supabase-Projekt über den Supabase-Button.'
+      'Supabase not connected',
+      'Please connect to your Supabase project first using the Supabase button.'
     );
     return null;
   }

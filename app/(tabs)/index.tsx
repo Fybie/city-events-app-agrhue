@@ -58,7 +58,7 @@ const EventsScreen = () => {
   };
 
   const handleLocationChange = (location: string) => {
-    setLocationFilter(location === 'Alle Orte' ? 'all' : location);
+    setLocationFilter(location === 'All Locations' ? 'all' : location);
   };
 
   const handleSupabaseConnected = () => {
@@ -74,7 +74,7 @@ const EventsScreen = () => {
           {!hasNotificationPermission && (
             <View style={styles.notificationWarning}>
               <Icon name="notifications-off-outline" size={16} color={colors.error} />
-              <Text style={styles.notificationWarningText}>Push-Benachrichtigungen deaktiviert</Text>
+              <Text style={styles.notificationWarningText}>Push notifications disabled</Text>
             </View>
           )}
         </View>
@@ -99,9 +99,9 @@ const EventsScreen = () => {
 
       <View style={styles.filterContainer}>
         <LocationFilter
-          selectedLocation={selectedLocation === 'all' ? 'Alle Orte' : selectedLocation}
+          selectedLocation={selectedLocation === 'all' ? 'All Locations' : selectedLocation}
           onLocationChange={handleLocationChange}
-          availableLocations={['Alle Orte', ...availableLocations]}
+          availableLocations={['All Locations', ...availableLocations]}
         />
       </View>
 
@@ -116,11 +116,11 @@ const EventsScreen = () => {
         {events.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="calendar-outline" size={64} color={colors.grey} />
-            <Text style={styles.emptyStateTitle}>Keine Events gefunden</Text>
+            <Text style={styles.emptyStateTitle}>No Events Found</Text>
             <Text style={styles.emptyStateText}>
               {selectedLocation !== 'all'
-                ? 'Keine Events in dieser Stadt gefunden. Versuchen Sie einen anderen Ort oder erstellen Sie das erste Event!'
-                : 'Seien Sie der Erste, der ein Event erstellt!'
+                ? 'No events found in this city. Try another location or create the first event!'
+                : 'Be the first to create an event!'
               }
             </Text>
           </View>

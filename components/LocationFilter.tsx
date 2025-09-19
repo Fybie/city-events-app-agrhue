@@ -27,7 +27,7 @@ export default function LocationFilter({ selectedLocation, onLocationChange, ava
       >
         <Icon name="location-outline" size={16} color={colors.text} />
         <Text style={styles.filterText}>
-          {selectedLocation === 'all' ? 'Alle Orte' : selectedLocation}
+          {selectedLocation}
         </Text>
         <Icon name="chevron-down" size={16} color={colors.text} />
       </TouchableOpacity>
@@ -45,31 +45,13 @@ export default function LocationFilter({ selectedLocation, onLocationChange, ava
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Ort auswählen</Text>
+              <Text style={styles.modalTitle}>Select Location</Text>
               <TouchableOpacity onPress={() => setIsModalVisible(false)}>
                 <Icon name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
             
             <ScrollView style={styles.locationList}>
-              <TouchableOpacity
-                style={[
-                  styles.locationItem,
-                  selectedLocation === 'all' && styles.selectedLocationItem
-                ]}
-                onPress={() => handleLocationSelect('all')}
-              >
-                <Text style={[
-                  styles.locationText,
-                  selectedLocation === 'all' && styles.selectedLocationText
-                ]}>
-                  Alle Orte
-                </Text>
-                {selectedLocation === 'all' && (
-                  <Icon name="checkmark" size={20} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-
               {availableLocations.map((location) => (
                 <TouchableOpacity
                   key={location}

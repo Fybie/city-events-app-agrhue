@@ -35,12 +35,12 @@ const ProfileScreen = () => {
 
   const handleDeleteEvent = (eventId: string) => {
     Alert.alert(
-      'Event löschen',
-      'Sind Sie sicher, dass Sie dieses Event löschen möchten?',
+      'Delete Event',
+      'Are you sure you want to delete this event?',
       [
-        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Löschen', 
+          text: 'Delete', 
           style: 'destructive',
           onPress: () => {
             console.log('Deleting event:', eventId);
@@ -57,8 +57,8 @@ const ProfileScreen = () => {
     } else {
       if (!isSupabaseInitialized()) {
         Alert.alert(
-          'Supabase erforderlich',
-          'Um sich anzumelden oder zu registrieren, müssen Sie zuerst Supabase aktivieren. Drücken Sie den Supabase-Button und verbinden Sie sich mit Ihrem Projekt.',
+          'Supabase Required',
+          'To sign in or register, you need to enable Supabase first. Press the Supabase button and connect to your project.',
           [{ text: 'OK' }]
         );
         return;
@@ -72,7 +72,7 @@ const ProfileScreen = () => {
   return (
     <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profil</Text>
+        <Text style={styles.headerTitle}>Profile</Text>
         <TouchableOpacity onPress={handleAuthAction} style={styles.settingsButton}>
           <Icon 
             name={isAuthenticated ? "settings-outline" : "log-in-outline"} 
@@ -96,7 +96,7 @@ const ProfileScreen = () => {
             onPress={handleAuthAction}
           >
             <Text style={styles.loginPromptText}>
-              Jetzt anmelden für vollständige Funktionen
+              Sign in now for full features
             </Text>
           </TouchableOpacity>
         )}
@@ -108,7 +108,7 @@ const ProfileScreen = () => {
           onPress={() => setActiveTab('created')}
         >
           <Text style={[styles.tabText, activeTab === 'created' && styles.activeTabText]}>
-            Meine Events ({userEvents.length})
+            My Events ({userEvents.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -116,7 +116,7 @@ const ProfileScreen = () => {
           onPress={() => setActiveTab('favorites')}
         >
           <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
-            Favoriten ({favoriteEvents.length})
+            Favorites ({favoriteEvents.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -134,12 +134,12 @@ const ProfileScreen = () => {
               color={colors.grey} 
             />
             <Text style={styles.emptyStateTitle}>
-              {activeTab === 'created' ? 'Keine Events erstellt' : 'Keine Favoriten'}
+              {activeTab === 'created' ? 'No Events Created' : 'No Favorites'}
             </Text>
             <Text style={styles.emptyStateText}>
               {activeTab === 'created' 
-                ? 'Sie haben noch keine Events erstellt. Erstellen Sie Ihr erstes Event!'
-                : 'Sie haben noch keine Events favorisiert. Markieren Sie Events als Favoriten!'
+                ? 'You haven\'t created any events yet. Create your first event!'
+                : 'You haven\'t favorited any events yet. Mark events as favorites!'
               }
             </Text>
           </View>

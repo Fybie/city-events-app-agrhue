@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   
-  // Berechne die optimale Tab-Bar-Höhe basierend auf der Safe Area
+  // Calculate optimal tab bar height based on safe area
   const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
   const paddingBottom = Platform.OS === 'ios' ? Math.max(insets.bottom - 15, 5) : 8;
 
@@ -27,7 +27,7 @@ export default function TabLayout() {
           bottom: 0,
           left: 0,
           right: 0,
-          // Verbesserte Schatten für bessere Sichtbarkeit
+          // Improved shadows for better visibility
           shadowColor: '#000',
           shadowOffset: {
             width: 0,
@@ -61,7 +61,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="past-events"
         options={{
-          title: 'Berichte',
+          title: 'Reports',
           tabBarIcon: ({ color, size }) => (
             <Icon name="document-text-outline" size={22} color={color} />
           ),
@@ -70,7 +70,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Icon name="person-outline" size={22} color={color} />
           ),

@@ -28,7 +28,7 @@ const PastEventsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Berechne den unteren Abstand für die Tab-Bar
+  // Calculate bottom spacing for tab bar
   const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
 
   const onRefresh = () => {
@@ -51,21 +51,21 @@ const PastEventsScreen = () => {
   };
 
   const handleLocationChange = (location: string) => {
-    setLocationFilter(location === 'Alle Orte' ? 'all' : location);
+    setLocationFilter(location === 'All Locations' ? 'all' : location);
   };
 
   const handleDateRangeChange = (dateRange: string) => {
-    setDateRangeFilter(dateRange === 'Alle Zeiten' ? 'all' : dateRange);
+    setDateRangeFilter(dateRange === 'All Time' ? 'all' : dateRange);
   };
 
-  const dateRangeOptions = ['Alle Zeiten', 'Letzte Woche', 'Letzter Monat', 'Letzte 3 Monate'];
+  const dateRangeOptions = ['All Time', 'Last Week', 'Last Month', 'Last 3 Months'];
 
   return (
     <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Berichte</Text>
-          <Text style={styles.headerSubtitle}>Vergangene Events</Text>
+          <Text style={styles.headerTitle}>Reports</Text>
+          <Text style={styles.headerSubtitle}>Past Events</Text>
         </View>
         <TouchableOpacity 
           style={styles.createButton}
@@ -77,14 +77,14 @@ const PastEventsScreen = () => {
 
       <View style={styles.filterContainer}>
         <LocationFilter
-          selectedLocation={selectedLocation === 'all' ? 'Alle Orte' : selectedLocation}
+          selectedLocation={selectedLocation === 'all' ? 'All Locations' : selectedLocation}
           onLocationChange={handleLocationChange}
-          availableLocations={['Alle Orte', ...availableLocations]}
+          availableLocations={['All Locations', ...availableLocations]}
         />
         
         <View style={styles.dateFilterContainer}>
           <LocationFilter
-            selectedLocation={selectedDateRange === 'all' ? 'Alle Zeiten' : selectedDateRange}
+            selectedLocation={selectedDateRange === 'all' ? 'All Time' : selectedDateRange}
             onLocationChange={handleDateRangeChange}
             availableLocations={dateRangeOptions}
           />
@@ -102,11 +102,11 @@ const PastEventsScreen = () => {
         {reports.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="document-text-outline" size={64} color={colors.grey} />
-            <Text style={styles.emptyStateTitle}>Keine Berichte gefunden</Text>
+            <Text style={styles.emptyStateTitle}>No Reports Found</Text>
             <Text style={styles.emptyStateText}>
               {selectedLocation !== 'all' || selectedDateRange !== 'all'
-                ? 'Keine Berichte für die gewählten Filter gefunden. Versuchen Sie andere Filter oder erstellen Sie den ersten Bericht!'
-                : 'Seien Sie der Erste, der über ein vergangenes Event berichtet!'
+                ? 'No reports found for the selected filters. Try different filters or create the first report!'
+                : 'Be the first to report on a past event!'
               }
             </Text>
           </View>
