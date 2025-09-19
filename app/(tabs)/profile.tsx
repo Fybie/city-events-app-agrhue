@@ -4,22 +4,33 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'rea
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import EventCard from '../../components/EventCard';
+import AuthSheet from '../../components/AuthSheet';
+import ProfileSettingsSheet from '../../components/ProfileSettingsSheet';
 import { useEvents } from '../../hooks/useEvents';
+import { useAuth } from '../../hooks/useAuth';
 import { commonStyles, colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import { currentUser } from '../../data/mockData';
 import { Platform } from 'react-native';
+import { isSupabaseInitialized } from '../../utils/supabase';
 
 const ProfileScreen = () => {
   const { events, deleteEvent, likeEvent, reportEvent, isFavorite, toggleFavorite } = useEvents();
+  const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<'created' | 'favorites'>('created');
+  const [showAuthSheet, setShowAuthSheet] = useState(false);
+  const [showSettingsSheet, setShowSettingsSheet] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Berechne den unteren Abstand für die Tab-Bar
+  // Calculate bottom spacing for tab bar
   const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
 
+  // Use authenticated user or fallback to mock user
+  const displayUser = isAuthenticated && user ? user : currentUser;
+  const userId = isAuthenticated && user ? user.id : currentUser.id;
+
   // Filter events based on current user
-  const userEvents = events.filter(event => event.authorId === currentUser.id);
+  const userEvents = events.filter(event => event.authorId === userId);
   const favoriteEvents = events.filter(event => isFavorite(event.id));
 
   const handleDeleteEvent = (eventId: string) => {
@@ -40,20 +51,55 @@ const ProfileScreen = () => {
     );
   };
 
+  const handleAuthAction = () => {
+    if (isAuthenticated) {
+      setShowSettingsSheet(true);
+    } else {
+      if (!isSupabaseInitialized()) {
+        Alert.alert(
+          'Supabase erforderlich',
+          'Um sich anzumelden oder zu registrieren, müssen Sie zuerst Supabase aktivieren. Drücken Sie den Supabase-Button und verbinden Sie sich mit Ihrem Projekt.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      setShowAuthSheet(true);
+    }
+  };
+
   const displayEvents = activeTab === 'created' ? userEvents : favoriteEvents;
 
   return (
     <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profil</Text>
+        <TouchableOpacity onPress={handleAuthAction} style={styles.settingsButton}>
+          <Icon 
+            name={isAuthenticated ? "settings-outline" : "log-in-outline"} 
+            size={24} 
+            color={colors.text} 
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.profileInfo}>
         <View style={styles.avatar}>
-          <Icon name="person" size={32} color={colors.text} />
+          <Icon name="person" size={32} color="white" />
         </View>
-        <Text style={styles.userName}>{currentUser.name}</Text>
-        <Text style={styles.userEmail}>{currentUser.email}</Text>
+        <Text style={styles.userName}>{displayUser.name}</Text>
+        <Text style={styles.userEmail}>
+          {isAuthenticated && user ? user.email : displayUser.email}
+        </Text>
+        {!isAuthenticated && (
+          <TouchableOpacity 
+            style={styles.loginPrompt}
+            onPress={handleAuthAction}
+          >
+            <Text style={styles.loginPromptText}>
+              Jetzt anmelden für vollständige Funktionen
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.tabContainer}>
@@ -102,7 +148,10 @@ const ProfileScreen = () => {
             <EventCard
               key={event.id}
               event={event}
-              onPress={() => console.log('Event pressed:', event.id)}
+              onPress={() => {
+                console.log('Event pressed:', event.id);
+                router.push(`/event/${event.id}`);
+              }}
               onLike={() => likeEvent(event.id)}
               onFavorite={() => toggleFavorite(event)}
               isFavorite={isFavorite(event.id)}
@@ -128,6 +177,16 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <AuthSheet 
+        isVisible={showAuthSheet} 
+        onClose={() => setShowAuthSheet(false)} 
+      />
+
+      <ProfileSettingsSheet 
+        isVisible={showSettingsSheet} 
+        onClose={() => setShowSettingsSheet(false)} 
+      />
     </SafeAreaView>
   );
 };
@@ -137,6 +196,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -146,6 +208,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 24,
     fontWeight: '700',
+  },
+  settingsButton: {
+    padding: 8,
   },
   profileInfo: {
     alignItems: 'center',
@@ -172,6 +237,19 @@ const styles = StyleSheet.create({
   userEmail: {
     color: colors.grey,
     fontSize: 14,
+    marginBottom: 8,
+  },
+  loginPrompt: {
+    backgroundColor: colors.accent + '20',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 8,
+  },
+  loginPromptText: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '500',
   },
   tabContainer: {
     flexDirection: 'row',

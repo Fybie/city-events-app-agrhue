@@ -4,12 +4,15 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useEvents } from '../../hooks/useEvents';
+import { useAuth } from '../../hooks/useAuth';
 import { commonStyles, colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import EventCard from '../../components/EventCard';
 import CreateEventSheet from '../../components/CreateEventSheet';
 import LocationFilter from '../../components/LocationFilter';
+import SupabaseConnectionSheet from '../../components/SupabaseConnectionSheet';
 import { Platform } from 'react-native';
+import { isSupabaseInitialized } from '../../utils/supabase';
 
 const EventsScreen = () => {
   const {
@@ -26,11 +29,13 @@ const EventsScreen = () => {
     hasNotificationPermission
   } = useEvents();
 
+  const { checkAuthStatus } = useAuth();
   const [isCreateSheetVisible, setIsCreateSheetVisible] = useState(false);
+  const [isSupabaseSheetVisible, setIsSupabaseSheetVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Berechne den unteren Abstand für die Tab-Bar
+  // Calculate bottom spacing for tab bar
   const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
 
   const onRefresh = () => {
@@ -56,6 +61,11 @@ const EventsScreen = () => {
     setLocationFilter(location === 'Alle Orte' ? 'all' : location);
   };
 
+  const handleSupabaseConnected = () => {
+    console.log('Supabase connected, checking auth status');
+    checkAuthStatus();
+  };
+
   return (
     <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
       <View style={styles.header}>
@@ -68,12 +78,23 @@ const EventsScreen = () => {
             </View>
           )}
         </View>
-        <TouchableOpacity 
-          style={styles.createButton}
-          onPress={() => setIsCreateSheetVisible(true)}
-        >
-          <Icon name="add" size={24} color={colors.text} />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          {!isSupabaseInitialized() && (
+            <TouchableOpacity 
+              style={styles.supabaseButton}
+              onPress={() => setIsSupabaseSheetVisible(true)}
+            >
+              <Icon name="cloud-outline" size={20} color="white" />
+              <Text style={styles.supabaseButtonText}>Supabase</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity 
+            style={styles.createButton}
+            onPress={() => setIsCreateSheetVisible(true)}
+          >
+            <Icon name="add" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.filterContainer}>
@@ -123,6 +144,12 @@ const EventsScreen = () => {
         onClose={() => setIsCreateSheetVisible(false)}
         onCreateEvent={handleCreateEvent}
       />
+
+      <SupabaseConnectionSheet
+        isVisible={isSupabaseSheetVisible}
+        onClose={() => setIsSupabaseSheetVisible(false)}
+        onConnected={handleSupabaseConnected}
+      />
     </SafeAreaView>
   );
 };
@@ -157,6 +184,25 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: 12,
     marginLeft: 4,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  supabaseButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  supabaseButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   createButton: {
     backgroundColor: colors.primary,
