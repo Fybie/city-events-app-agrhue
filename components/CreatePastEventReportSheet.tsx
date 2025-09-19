@@ -35,7 +35,7 @@ const CreatePastEventReportSheet: React.FC<CreatePastEventReportSheetProps> = ({
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
   const pickImages = async () => {
-    console.log('Opening image picker for multiple images');
+    console.log('Öffne Bildauswahl für mehrere Bilder');
     
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
@@ -52,13 +52,13 @@ const CreatePastEventReportSheet: React.FC<CreatePastEventReportSheetProps> = ({
     });
 
     if (!result.canceled && result.assets[0]) {
-      console.log('Image selected:', result.assets[0].uri);
+      console.log('Bild ausgewählt:', result.assets[0].uri);
       setSelectedImages(prev => [...prev, result.assets[0].uri]);
     }
   };
 
   const removeImage = (index: number) => {
-    console.log('Removing image at index:', index);
+    console.log('Entferne Bild bei Index:', index);
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -68,7 +68,7 @@ const CreatePastEventReportSheet: React.FC<CreatePastEventReportSheetProps> = ({
       return;
     }
 
-    console.log('Creating new past event report:', title);
+    console.log('Erstelle neuen Event-Bericht:', title);
     
     onCreateReport({
       title: title.trim(),
@@ -81,7 +81,7 @@ const CreatePastEventReportSheet: React.FC<CreatePastEventReportSheetProps> = ({
       images: selectedImages.length > 0 ? selectedImages : undefined
     });
 
-    // Reset form
+    // Formular zurücksetzen
     setTitle('');
     setDescription('');
     setEventDate('');

@@ -14,7 +14,7 @@ export default function LocationFilter({ selectedLocation, onLocationChange, ava
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleLocationSelect = (location: string) => {
-    console.log('Selected location:', location);
+    console.log('Ausgewählter Ort:', location);
     onLocationChange(location);
     setIsModalVisible(false);
   };
@@ -45,7 +45,7 @@ export default function LocationFilter({ selectedLocation, onLocationChange, ava
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Location</Text>
+              <Text style={styles.modalTitle}>Ort auswählen</Text>
               <TouchableOpacity onPress={() => setIsModalVisible(false)}>
                 <Icon name="close" size={24} color={colors.text} />
               </TouchableOpacity>

@@ -22,28 +22,28 @@ const ProfileScreen = () => {
   const [showSettingsSheet, setShowSettingsSheet] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Calculate bottom spacing for tab bar
+  // Berechne den unteren Abstand für die Tab-Bar
   const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
 
-  // Use authenticated user or fallback to mock user
+  // Verwende authentifizierten Benutzer oder Fallback zu Mock-Benutzer
   const displayUser = isAuthenticated && user ? user : currentUser;
   const userId = isAuthenticated && user ? user.id : currentUser.id;
 
-  // Filter events based on current user
+  // Filtere Events basierend auf dem aktuellen Benutzer
   const userEvents = events.filter(event => event.authorId === userId);
   const favoriteEvents = events.filter(event => isFavorite(event.id));
 
   const handleDeleteEvent = (eventId: string) => {
     Alert.alert(
-      'Delete Event',
-      'Are you sure you want to delete this event?',
+      'Event löschen',
+      'Sind Sie sicher, dass Sie dieses Event löschen möchten?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Abbrechen', style: 'cancel' },
         { 
-          text: 'Delete', 
+          text: 'Löschen', 
           style: 'destructive',
           onPress: () => {
-            console.log('Deleting event:', eventId);
+            console.log('Lösche Event:', eventId);
             deleteEvent(eventId);
           }
         }
@@ -57,8 +57,8 @@ const ProfileScreen = () => {
     } else {
       if (!isSupabaseInitialized()) {
         Alert.alert(
-          'Supabase Required',
-          'To sign in or register, you need to enable Supabase first. Press the Supabase button and connect to your project.',
+          'Supabase erforderlich',
+          'Um sich anzumelden oder zu registrieren, müssen Sie zuerst Supabase aktivieren. Drücken Sie die Supabase-Schaltfläche und verbinden Sie sich mit Ihrem Projekt.',
           [{ text: 'OK' }]
         );
         return;
@@ -72,7 +72,7 @@ const ProfileScreen = () => {
   return (
     <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>Profil</Text>
         <TouchableOpacity onPress={handleAuthAction} style={styles.settingsButton}>
           <Icon 
             name={isAuthenticated ? "settings-outline" : "log-in-outline"} 
@@ -96,7 +96,7 @@ const ProfileScreen = () => {
             onPress={handleAuthAction}
           >
             <Text style={styles.loginPromptText}>
-              Sign in now for full features
+              Jetzt anmelden für alle Funktionen
             </Text>
           </TouchableOpacity>
         )}
@@ -108,7 +108,7 @@ const ProfileScreen = () => {
           onPress={() => setActiveTab('created')}
         >
           <Text style={[styles.tabText, activeTab === 'created' && styles.activeTabText]}>
-            My Events ({userEvents.length})
+            Meine Events ({userEvents.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -116,7 +116,7 @@ const ProfileScreen = () => {
           onPress={() => setActiveTab('favorites')}
         >
           <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
-            Favorites ({favoriteEvents.length})
+            Favoriten ({favoriteEvents.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -134,12 +134,12 @@ const ProfileScreen = () => {
               color={colors.grey} 
             />
             <Text style={styles.emptyStateTitle}>
-              {activeTab === 'created' ? 'No Events Created' : 'No Favorites'}
+              {activeTab === 'created' ? 'Keine Events erstellt' : 'Keine Favoriten'}
             </Text>
             <Text style={styles.emptyStateText}>
               {activeTab === 'created' 
-                ? 'You haven\'t created any events yet. Create your first event!'
-                : 'You haven\'t favorited any events yet. Mark events as favorites!'
+                ? 'Sie haben noch keine Events erstellt. Erstellen Sie Ihr erstes Event!'
+                : 'Sie haben noch keine Events favorisiert. Markieren Sie Events als Favoriten!'
               }
             </Text>
           </View>
@@ -149,7 +149,7 @@ const ProfileScreen = () => {
               key={event.id}
               event={event}
               onPress={() => {
-                console.log('Event pressed:', event.id);
+                console.log('Event gedrückt:', event.id);
                 router.push(`/event/${event.id}`);
               }}
               onLike={() => likeEvent(event.id)}
@@ -162,12 +162,12 @@ const ProfileScreen = () => {
           ))
         )}
 
-        {/* Legal Section */}
+        {/* Rechtlicher Bereich */}
         <View style={styles.legalSection}>
           <TouchableOpacity
             style={styles.legalButton}
             onPress={() => {
-              console.log('Navigating to Impressum');
+              console.log('Navigation zum Impressum');
               router.push('/impressum');
             }}
           >

@@ -35,34 +35,34 @@ const EventsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Calculate bottom spacing for tab bar
+  // Berechne den unteren Abstand für die Tab-Bar
   const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
 
   const onRefresh = () => {
-    console.log('Refreshing events');
+    console.log('Aktualisiere Events');
     setRefreshing(true);
-    // Simulate refresh
+    // Simuliere Aktualisierung
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
   };
 
   const handleEventPress = (eventId: string) => {
-    console.log('Opening event:', eventId);
+    console.log('Öffne Event:', eventId);
     router.push(`/event/${eventId}`);
   };
 
   const handleCreateEvent = (eventData: any) => {
-    console.log('Creating event:', eventData);
+    console.log('Erstelle Event:', eventData);
     addEvent(eventData);
   };
 
   const handleLocationChange = (location: string) => {
-    setLocationFilter(location === 'All Locations' ? 'all' : location);
+    setLocationFilter(location === 'Alle Orte' ? 'all' : location);
   };
 
   const handleSupabaseConnected = () => {
-    console.log('Supabase connected, checking auth status');
+    console.log('Supabase verbunden, prüfe Auth-Status');
     checkAuthStatus();
   };
 
@@ -74,7 +74,7 @@ const EventsScreen = () => {
           {!hasNotificationPermission && (
             <View style={styles.notificationWarning}>
               <Icon name="notifications-off-outline" size={16} color={colors.error} />
-              <Text style={styles.notificationWarningText}>Push notifications disabled</Text>
+              <Text style={styles.notificationWarningText}>Push-Benachrichtigungen deaktiviert</Text>
             </View>
           )}
         </View>
@@ -99,9 +99,9 @@ const EventsScreen = () => {
 
       <View style={styles.filterContainer}>
         <LocationFilter
-          selectedLocation={selectedLocation === 'all' ? 'All Locations' : selectedLocation}
+          selectedLocation={selectedLocation === 'all' ? 'Alle Orte' : selectedLocation}
           onLocationChange={handleLocationChange}
-          availableLocations={['All Locations', ...availableLocations]}
+          availableLocations={['Alle Orte', ...availableLocations]}
         />
       </View>
 
@@ -116,11 +116,11 @@ const EventsScreen = () => {
         {events.length === 0 ? (
           <View style={styles.emptyState}>
             <Icon name="calendar-outline" size={64} color={colors.grey} />
-            <Text style={styles.emptyStateTitle}>No Events Found</Text>
+            <Text style={styles.emptyStateTitle}>Keine Events gefunden</Text>
             <Text style={styles.emptyStateText}>
               {selectedLocation !== 'all'
-                ? 'No events found in this city. Try another location or create the first event!'
-                : 'Be the first to create an event!'
+                ? 'Keine Events in dieser Stadt gefunden. Versuchen Sie einen anderen Ort oder erstellen Sie das erste Event!'
+                : 'Seien Sie der Erste, der ein Event erstellt!'
               }
             </Text>
           </View>
