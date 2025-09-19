@@ -11,13 +11,22 @@ interface LocationFilterProps {
 }
 
 export default function LocationFilter({ selectedLocation, onLocationChange, availableLocations }: LocationFilterProps) {
+  console.log('🗺️ LocationFilter rendering with locations:', availableLocations?.length || 0);
+  
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleLocationSelect = (location: string) => {
     console.log('Ausgewählter Ort:', location);
-    onLocationChange(location);
-    setIsModalVisible(false);
+    try {
+      onLocationChange(location);
+      setIsModalVisible(false);
+    } catch (error) {
+      console.error('❌ Error in handleLocationSelect:', error);
+    }
   };
+
+  // Ensure we have valid locations
+  const safeLocations = availableLocations || ['Alle Städte'];
 
   return (
     <View style={styles.container}>
@@ -52,7 +61,7 @@ export default function LocationFilter({ selectedLocation, onLocationChange, ava
             </View>
             
             <ScrollView style={styles.locationList}>
-              {availableLocations.map((location) => (
+              {safeLocations.map((location) => (
                 <TouchableOpacity
                   key={location}
                   style={[

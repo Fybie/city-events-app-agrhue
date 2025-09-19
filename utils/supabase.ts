@@ -8,23 +8,31 @@ let supabaseAnonKey = '';
 let supabase: any = null;
 
 export const initializeSupabase = (url: string, key: string) => {
-  console.log('Initializing Supabase with URL:', url);
-  supabaseUrl = url;
-  supabaseAnonKey = key;
-  supabase = createClient(url, key);
-  return supabase;
+  try {
+    console.log('Initializing Supabase with URL:', url);
+    supabaseUrl = url;
+    supabaseAnonKey = key;
+    supabase = createClient(url, key);
+    console.log('✅ Supabase initialized successfully');
+    return supabase;
+  } catch (error) {
+    console.error('❌ Error initializing Supabase:', error);
+    Alert.alert('Fehler', 'Supabase konnte nicht initialisiert werden: ' + error);
+    return null;
+  }
 };
 
 export const getSupabase = () => {
-  if (!supabase) {
-    console.log('Supabase not initialized');
-    Alert.alert(
-      'Supabase not connected',
-      'Please connect to your Supabase project first using the Supabase button.'
-    );
+  try {
+    if (!supabase) {
+      console.log('Supabase not initialized');
+      return null;
+    }
+    return supabase;
+  } catch (error) {
+    console.error('❌ Error getting Supabase client:', error);
     return null;
   }
-  return supabase;
 };
 
 export const isSupabaseInitialized = () => {

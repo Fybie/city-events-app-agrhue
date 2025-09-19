@@ -7,11 +7,15 @@ export const colors = {
   accent: '#64B5F6',     // Light Blue
   background: '#101824',  // Keeping dark background
   backgroundAlt: '#162133',  // Keeping dark background
+  surface: '#1a1f2e',    // Surface color for cards and sheets
   text: '#e3e3e3',       // Keeping light text
+  textSecondary: '#9ca3af', // Secondary text color
   grey: '#90CAF9',       // Light Blue Grey
   lightGrey: '#2a3441',  // Lighter grey for borders and dividers
+  border: '#374151',     // Border color
   card: '#193cb8',       // Keeping dark card background
   error: '#ff4444',      // Error red color
+  warning: '#f59e0b',    // Warning color
 };
 
 export const buttonStyles = StyleSheet.create({

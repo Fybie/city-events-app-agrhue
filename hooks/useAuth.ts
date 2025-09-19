@@ -24,13 +24,20 @@ interface UserProfile {
 }
 
 export const useAuth = () => {
+  console.log('🔐 useAuth hook initializing...');
+  
   const [user, setUser] = useState<AuthUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    checkAuthStatus();
+    try {
+      console.log('🔐 useAuth checking auth status...');
+      checkAuthStatus();
+    } catch (error) {
+      console.error('❌ Error in useAuth useEffect:', error);
+    }
   }, []);
 
   const checkAuthStatus = async () => {

@@ -6,9 +6,13 @@ import { colors } from '../../styles/commonStyles';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function TabLayout() {
-  const { user, isAuthenticated } = useAuth();
+  console.log('📱 TabLayout rendering...');
+  
+  try {
+    const { user, isAuthenticated } = useAuth();
+    console.log('✅ TabLayout auth hook initialized');
 
-  return (
+    return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
@@ -65,7 +69,11 @@ export default function TabLayout() {
           ),
           href: user?.isAdmin ? '/(tabs)/admin' : null,
         }}
-      />
-    </Tabs>
-  );
+        />
+      </Tabs>
+    );
+  } catch (error) {
+    console.error('❌ Error in TabLayout:', error);
+    return null;
+  }
 }

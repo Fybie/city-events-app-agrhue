@@ -111,12 +111,19 @@ const styles = StyleSheet.create({
 });
 
 export default function EventsScreen() {
-  const { events, loading, refreshEvents, createEvent, deleteEvent, likeEvent } = useEvents();
-  const { user, isAuthenticated } = useAuth();
-  const [selectedLocation, setSelectedLocation] = useState<string>('Alle Städte');
-  const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const [showAuthSheet, setShowAuthSheet] = useState(false);
-  const insets = useSafeAreaInsets();
+  console.log('🏠 EventsScreen rendering...');
+  
+  try {
+    const { events, loading, refreshEvents, createEvent, deleteEvent, likeEvent } = useEvents();
+    const { user, isAuthenticated } = useAuth();
+    const [selectedLocation, setSelectedLocation] = useState<string>('Alle Städte');
+    const [showCreateSheet, setShowCreateSheet] = useState(false);
+    const [showAuthSheet, setShowAuthSheet] = useState(false);
+    const insets = useSafeAreaInsets();
+
+    console.log('✅ EventsScreen hooks initialized successfully');
+    console.log('📊 Events loaded:', events?.length || 0);
+    console.log('👤 User authenticated:', isAuthenticated, user?.name || 'No user');
 
   const filteredEvents = events.filter(event => {
     if (selectedLocation === 'Alle Städte') return true;
@@ -183,17 +190,17 @@ export default function EventsScreen() {
     return isAuthenticated && user && (user.id === event.authorId || user.isAdmin);
   };
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Connection Banner */}
-      {!isSupabaseInitialized() && (
-        <View style={styles.connectionBanner}>
-          <Icon name="alert-circle" size={20} color={colors.text} />
-          <Text style={styles.connectionBannerText}>
-            Offline-Modus: Verbinden Sie sich mit Supabase für vollständige Funktionalität
-          </Text>
-        </View>
-      )}
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {/* Connection Banner */}
+        {!isSupabaseInitialized() && (
+          <View style={styles.connectionBanner}>
+            <Icon name="alert-circle" size={20} color={colors.text} />
+            <Text style={styles.connectionBannerText}>
+              Offline-Modus: Verbinden Sie sich mit Supabase für vollständige Funktionalität
+            </Text>
+          </View>
+        )}
 
       {/* Header */}
       <View style={styles.header}>
@@ -234,7 +241,7 @@ export default function EventsScreen() {
           <LocationFilter
             selectedLocation={selectedLocation}
             onLocationChange={handleLocationChange}
-            events={events}
+            availableLocations={['Alle Städte', ...Array.from(new Set(events.map(event => event.city)))]}
           />
         </View>
 
@@ -294,7 +301,20 @@ export default function EventsScreen() {
       <AuthSheet
         isVisible={showAuthSheet}
         onClose={() => setShowAuthSheet(false)}
-      />
-    </SafeAreaView>
-  );
+        />
+      </SafeAreaView>
+    );
+  } catch (error) {
+    console.error('❌ Error in EventsScreen:', error);
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.emptyState}>
+          <Icon name="alert-circle" size={48} color={colors.error} />
+          <Text style={styles.emptyStateText}>
+            Ein Fehler ist aufgetreten. Bitte starten Sie die App neu.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 }

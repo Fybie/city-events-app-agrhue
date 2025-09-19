@@ -9,12 +9,20 @@ interface IconProps {
   color?: string;
 }
 
-export default function Icon({ name, size = 40, style, color = "black" }: IconProps) {
-  return (
-    <View style={[styles.iconContainer, style]}>
-      <Ionicons name={name} size={size} color={color} />
-    </View>
-  );
+export default function Icon({ name, size = 40, style, color = colors.text }: IconProps) {
+  try {
+    return (
+      <View style={[styles.iconContainer, style]}>
+        <Ionicons name={name} size={size} color={color} />
+      </View>
+    );
+  } catch (error) {
+    console.error('❌ Error rendering Icon:', error, { name, size, color });
+    // Fallback to a simple view if icon fails to render
+    return (
+      <View style={[styles.iconContainer, style, { width: size, height: size, backgroundColor: color + '20' }]} />
+    );
+  }
 }
 
 const styles = StyleSheet.create({

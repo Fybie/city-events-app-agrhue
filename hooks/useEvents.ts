@@ -6,20 +6,28 @@ import { getSupabase, isSupabaseInitialized } from '../utils/supabase';
 import { mockEvents } from '../data/mockData';
 
 export const useEvents = () => {
+  console.log('📅 useEvents hook initializing...');
+  
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadEvents();
+    try {
+      console.log('📅 useEvents loading events...');
+      loadEvents();
+    } catch (error) {
+      console.error('❌ Error in useEvents useEffect:', error);
+    }
   }, []);
 
   const loadEvents = async () => {
-    if (!isSupabaseInitialized()) {
-      console.log('Supabase not initialized, using mock data');
-      setEvents(mockEvents);
-      return;
-    }
+    try {
+      if (!isSupabaseInitialized()) {
+        console.log('Supabase not initialized, using mock data');
+        setEvents(mockEvents || []);
+        return;
+      }
 
     const supabase = getSupabase();
     if (!supabase) {
@@ -81,11 +89,16 @@ export const useEvents = () => {
     } catch (error) {
       console.error('Error loading events:', error);
       Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
-      setEvents(mockEvents);
+      setEvents(mockEvents || []);
     } finally {
       setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error('❌ Critical error in loadEvents:', error);
+    setEvents(mockEvents || []);
+    setLoading(false);
+  }
+};
 
   const refreshEvents = async () => {
     setRefreshing(true);
