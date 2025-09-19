@@ -113,82 +113,83 @@ const styles = StyleSheet.create({
 export default function EventsScreen() {
   console.log('🏠 EventsScreen rendering...');
   
+  // Always call hooks at the top level
+  const { events, loading, refreshEvents, createEvent, deleteEvent, likeEvent } = useEvents();
+  const { user, isAuthenticated } = useAuth();
+  const [selectedLocation, setSelectedLocation] = useState<string>('Alle Städte');
+  const [showCreateSheet, setShowCreateSheet] = useState(false);
+  const [showAuthSheet, setShowAuthSheet] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  console.log('✅ EventsScreen hooks initialized successfully');
+  console.log('📊 Events loaded:', events?.length || 0);
+  console.log('👤 User authenticated:', isAuthenticated, user?.name || 'No user');
+
   try {
-    const { events, loading, refreshEvents, createEvent, deleteEvent, likeEvent } = useEvents();
-    const { user, isAuthenticated } = useAuth();
-    const [selectedLocation, setSelectedLocation] = useState<string>('Alle Städte');
-    const [showCreateSheet, setShowCreateSheet] = useState(false);
-    const [showAuthSheet, setShowAuthSheet] = useState(false);
-    const insets = useSafeAreaInsets();
-
-    console.log('✅ EventsScreen hooks initialized successfully');
-    console.log('📊 Events loaded:', events?.length || 0);
-    console.log('👤 User authenticated:', isAuthenticated, user?.name || 'No user');
-
-  const filteredEvents = events.filter(event => {
-    if (selectedLocation === 'Alle Städte') return true;
-    return event.city === selectedLocation;
-  });
-
-  const upcomingEvents = filteredEvents.filter(event => {
-    const eventDate = new Date(event.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return eventDate >= today;
-  });
-
-  const onRefresh = async () => {
-    await refreshEvents();
-  };
-
-  const handleEventPress = (eventId: string) => {
-    router.push(`/event/${eventId}`);
-  };
-
-  const handleCreateEvent = async (eventData: any) => {
-    if (!isAuthenticated || !user) {
-      Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Veranstaltungen zu erstellen.');
-      setShowAuthSheet(true);
-      return;
-    }
-
-    const result = await createEvent({
-      ...eventData,
-      author: user.name || 'Unbekannt',
-      authorId: user.id,
+    const filteredEvents = events.filter(event => {
+      if (selectedLocation === 'Alle Städte') return true;
+      return event.city === selectedLocation;
     });
 
-    if (result.success) {
-      setShowCreateSheet(false);
-    }
-  };
+    const upcomingEvents = filteredEvents.filter(event => {
+      const eventDate = new Date(event.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return eventDate >= today;
+    });
 
-  const handleLocationChange = (location: string) => {
-    setSelectedLocation(location);
-  };
+    const onRefresh = async () => {
+      await refreshEvents();
+    };
 
-  const handleAuthAction = () => {
-    setShowAuthSheet(true);
-  };
+    const handleEventPress = (eventId: string) => {
+      router.push(`/event/${eventId}`);
+    };
 
-  const handleLikeEvent = async (eventId: string) => {
-    if (!isAuthenticated || !user) {
-      Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Veranstaltungen zu liken.');
+    const handleCreateEvent = async (eventData: any) => {
+      if (!isAuthenticated || !user) {
+        Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Veranstaltungen zu erstellen.');
+        setShowAuthSheet(true);
+        return;
+      }
+
+      const result = await createEvent({
+        ...eventData,
+        author: user.name || 'Unbekannt',
+        authorId: user.id,
+      });
+
+      if (result.success) {
+        setShowCreateSheet(false);
+      }
+    };
+
+    const handleLocationChange = (location: string) => {
+      setSelectedLocation(location);
+    };
+
+    const handleAuthAction = () => {
       setShowAuthSheet(true);
-      return;
-    }
+    };
 
-    await likeEvent(eventId, user.id);
-  };
+    const handleLikeEvent = async (eventId: string) => {
+      if (!isAuthenticated || !user) {
+        Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Veranstaltungen zu liken.');
+        setShowAuthSheet(true);
+        return;
+      }
 
-  const handleDeleteEvent = async (eventId: string) => {
-    await deleteEvent(eventId);
-  };
+      await likeEvent(eventId, user.id);
+    };
 
-  const canCreateEvent = isAuthenticated && user;
-  const canDeleteEvent = (event: any) => {
-    return isAuthenticated && user && (user.id === event.authorId || user.isAdmin);
-  };
+    const handleDeleteEvent = async (eventId: string) => {
+      await deleteEvent(eventId);
+    };
+
+    const canCreateEvent = isAuthenticated && user;
+    const canDeleteEvent = (event: any) => {
+      return isAuthenticated && user && (user.id === event.authorId || user.isAdmin);
+    };
 
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -202,105 +203,105 @@ export default function EventsScreen() {
           </View>
         )}
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Veranstaltungskalender</Text>
-          <Text style={styles.headerSubtitle}>
-            {upcomingEvents.length} kommende Veranstaltungen
-          </Text>
-        </View>
-        <View style={styles.headerButtons}>
-          {!isAuthenticated ? (
-            <TouchableOpacity style={styles.headerButton} onPress={handleAuthAction}>
-              <Icon name="log-in" size={20} color={colors.primary} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity 
-              style={styles.headerButton} 
-              onPress={() => router.push('/(tabs)/profile')}
-            >
-              <Icon name="user" size={20} color={colors.primary} />
-            </TouchableOpacity>
-          )}
-          {user?.isAdmin && (
-            <TouchableOpacity 
-              style={styles.headerButton} 
-              onPress={() => router.push('/(tabs)/admin')}
-            >
-              <Icon name="settings" size={20} color={colors.primary} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Location Filter */}
-        <View style={styles.filterContainer}>
-          <LocationFilter
-            selectedLocation={selectedLocation}
-            onLocationChange={handleLocationChange}
-            availableLocations={['Alle Städte', ...Array.from(new Set(events.map(event => event.city)))]}
-          />
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Veranstaltungskalender</Text>
+            <Text style={styles.headerSubtitle}>
+              {upcomingEvents.length} kommende Veranstaltungen
+            </Text>
+          </View>
+          <View style={styles.headerButtons}>
+            {!isAuthenticated ? (
+              <TouchableOpacity style={styles.headerButton} onPress={handleAuthAction}>
+                <Icon name="log-in" size={20} color={colors.primary} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={() => router.push('/(tabs)/profile')}
+              >
+                <Icon name="user" size={20} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+            {user?.isAdmin && (
+              <TouchableOpacity 
+                style={styles.headerButton} 
+                onPress={() => router.push('/(tabs)/admin')}
+              >
+                <Icon name="settings" size={20} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
-        {/* Events List */}
-        <ScrollView
-          style={styles.eventsContainer}
-          refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.sectionTitle}>Kommende Veranstaltungen</Text>
-          
-          {upcomingEvents.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Icon name="calendar" size={48} color={colors.textSecondary} />
-              <Text style={styles.emptyStateText}>
-                {selectedLocation === 'Alle Städte' 
-                  ? 'Keine kommenden Veranstaltungen gefunden'
-                  : `Keine Veranstaltungen in ${selectedLocation} gefunden`
-                }
-              </Text>
-            </View>
-          ) : (
-            upcomingEvents.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                onPress={() => handleEventPress(event.id)}
-                onLike={() => handleLikeEvent(event.id)}
-                showActions={canDeleteEvent(event)}
-                onDelete={() => handleDeleteEvent(event.id)}
-              />
-            ))
-          )}
-        </ScrollView>
-      </View>
+        {/* Content */}
+        <View style={styles.content}>
+          {/* Location Filter */}
+          <View style={styles.filterContainer}>
+            <LocationFilter
+              selectedLocation={selectedLocation}
+              onLocationChange={handleLocationChange}
+              availableLocations={['Alle Städte', ...Array.from(new Set(events.map(event => event.city)))]}
+            />
+          </View>
 
-      {/* Create Event FAB */}
-      {canCreateEvent && (
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => setShowCreateSheet(true)}
-        >
-          <Icon name="plus" size={24} color="white" />
-        </TouchableOpacity>
-      )}
+          {/* Events List */}
+          <ScrollView
+            style={styles.eventsContainer}
+            refreshControl={
+              <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+            }
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.sectionTitle}>Kommende Veranstaltungen</Text>
+            
+            {upcomingEvents.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Icon name="calendar" size={48} color={colors.textSecondary} />
+                <Text style={styles.emptyStateText}>
+                  {selectedLocation === 'Alle Städte' 
+                    ? 'Keine kommenden Veranstaltungen gefunden'
+                    : `Keine Veranstaltungen in ${selectedLocation} gefunden`
+                  }
+                </Text>
+              </View>
+            ) : (
+              upcomingEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onPress={() => handleEventPress(event.id)}
+                  onLike={() => handleLikeEvent(event.id)}
+                  showActions={canDeleteEvent(event)}
+                  onDelete={() => handleDeleteEvent(event.id)}
+                />
+              ))
+            )}
+          </ScrollView>
+        </View>
 
-      {/* Create Event Sheet */}
-      <CreateEventSheet
-        isVisible={showCreateSheet}
-        onClose={() => setShowCreateSheet(false)}
-        onCreateEvent={handleCreateEvent}
-      />
+        {/* Create Event FAB */}
+        {canCreateEvent && (
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => setShowCreateSheet(true)}
+          >
+            <Icon name="plus" size={24} color="white" />
+          </TouchableOpacity>
+        )}
 
-      {/* Auth Sheet */}
-      <AuthSheet
-        isVisible={showAuthSheet}
-        onClose={() => setShowAuthSheet(false)}
+        {/* Create Event Sheet */}
+        <CreateEventSheet
+          isVisible={showCreateSheet}
+          onClose={() => setShowCreateSheet(false)}
+          onCreateEvent={handleCreateEvent}
+        />
+
+        {/* Auth Sheet */}
+        <AuthSheet
+          isVisible={showAuthSheet}
+          onClose={() => setShowAuthSheet(false)}
         />
       </SafeAreaView>
     );

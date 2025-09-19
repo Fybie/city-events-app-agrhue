@@ -8,10 +8,11 @@ import { useAuth } from '../../hooks/useAuth';
 export default function TabLayout() {
   console.log('📱 TabLayout rendering...');
   
-  try {
-    const { user, isAuthenticated } = useAuth();
-    console.log('✅ TabLayout auth hook initialized');
+  // Always call hooks at the top level
+  const { user, isAuthenticated } = useAuth();
+  console.log('✅ TabLayout auth hook initialized');
 
+  try {
     return (
     <Tabs
       screenOptions={{
