@@ -10,7 +10,7 @@ import Icon from '../../components/Icon';
 import EventCard from '../../components/EventCard';
 import CreateEventSheet from '../../components/CreateEventSheet';
 import LocationFilter from '../../components/LocationFilter';
-import SupabaseConnectionSheet from '../../components/SupabaseConnectionSheet';
+import AuthSheet from '../../components/AuthSheet';
 import { Platform } from 'react-native';
 import { isSupabaseInitialized } from '../../utils/supabase';
 
@@ -29,9 +29,9 @@ const EventsScreen = () => {
     hasNotificationPermission
   } = useEvents();
 
-  const { checkAuthStatus } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [isCreateSheetVisible, setIsCreateSheetVisible] = useState(false);
-  const [isSupabaseSheetVisible, setIsSupabaseSheetVisible] = useState(false);
+  const [isAuthSheetVisible, setIsAuthSheetVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -61,9 +61,16 @@ const EventsScreen = () => {
     setLocationFilter(location === 'Alle Orte' ? 'all' : location);
   };
 
-  const handleSupabaseConnected = () => {
-    console.log('Supabase verbunden, prüfe Auth-Status');
-    checkAuthStatus();
+  const handleAuthAction = () => {
+    if (!isSupabaseInitialized()) {
+      Alert.alert(
+        'Supabase erforderlich',
+        'Um sich anzumelden oder zu registrieren, müssen Sie zuerst Supabase in den Admin-Einstellungen aktivieren.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    setIsAuthSheetVisible(true);
   };
 
   return (
@@ -79,13 +86,13 @@ const EventsScreen = () => {
           )}
         </View>
         <View style={styles.headerButtons}>
-          {!isSupabaseInitialized() && (
+          {!isAuthenticated && (
             <TouchableOpacity 
-              style={styles.supabaseButton}
-              onPress={() => setIsSupabaseSheetVisible(true)}
+              style={styles.authButton}
+              onPress={handleAuthAction}
             >
-              <Icon name="cloud-outline" size={20} color="white" />
-              <Text style={styles.supabaseButtonText}>Supabase</Text>
+              <Icon name="log-in-outline" size={20} color="white" />
+              <Text style={styles.authButtonText}>Anmelden</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity 
@@ -104,6 +111,26 @@ const EventsScreen = () => {
           availableLocations={['Alle Orte', ...availableLocations]}
         />
       </View>
+
+      {!isAuthenticated && (
+        <View style={styles.authPromptContainer}>
+          <View style={styles.authPrompt}>
+            <Icon name="person-add-outline" size={24} color={colors.accent} />
+            <View style={styles.authPromptText}>
+              <Text style={styles.authPromptTitle}>Jetzt anmelden</Text>
+              <Text style={styles.authPromptSubtitle}>
+                Erstellen Sie Events, speichern Sie Favoriten und mehr
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.authPromptButton}
+              onPress={handleAuthAction}
+            >
+              <Text style={styles.authPromptButtonText}>Anmelden</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <ScrollView
         style={styles.content}
@@ -145,10 +172,9 @@ const EventsScreen = () => {
         onCreateEvent={handleCreateEvent}
       />
 
-      <SupabaseConnectionSheet
-        isVisible={isSupabaseSheetVisible}
-        onClose={() => setIsSupabaseSheetVisible(false)}
-        onConnected={handleSupabaseConnected}
+      <AuthSheet
+        isVisible={isAuthSheetVisible}
+        onClose={() => setIsAuthSheetVisible(false)}
       />
     </SafeAreaView>
   );
@@ -190,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  supabaseButton: {
+  authButton: {
     backgroundColor: colors.accent,
     borderRadius: 20,
     paddingHorizontal: 12,
@@ -199,7 +225,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  supabaseButtonText: {
+  authButtonText: {
     color: 'white',
     fontSize: 12,
     fontWeight: '600',
@@ -217,6 +243,45 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.grey + '30',
+  },
+  authPromptContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  authPrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent + '10',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.accent + '30',
+  },
+  authPromptText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  authPromptTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  authPromptSubtitle: {
+    color: colors.grey,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  authPromptButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  authPromptButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   content: {
     flex: 1,

@@ -58,7 +58,7 @@ const ProfileScreen = () => {
       if (!isSupabaseInitialized()) {
         Alert.alert(
           'Supabase erforderlich',
-          'Um sich anzumelden oder zu registrieren, müssen Sie zuerst Supabase aktivieren. Drücken Sie die Supabase-Schaltfläche und verbinden Sie sich mit Ihrem Projekt.',
+          'Um sich anzumelden oder zu registrieren, müssen Sie zuerst Supabase in den Admin-Einstellungen aktivieren.',
           [{ text: 'OK' }]
         );
         return;
@@ -91,14 +91,33 @@ const ProfileScreen = () => {
           {isAuthenticated && user ? user.email : displayUser.email}
         </Text>
         {!isAuthenticated && (
-          <TouchableOpacity 
-            style={styles.loginPrompt}
-            onPress={handleAuthAction}
-          >
-            <Text style={styles.loginPromptText}>
-              Jetzt anmelden für alle Funktionen
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.authActions}>
+            <TouchableOpacity 
+              style={styles.loginButton}
+              onPress={handleAuthAction}
+            >
+              <Icon name="log-in-outline" size={16} color="white" />
+              <Text style={styles.loginButtonText}>Anmelden</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.registerButton}
+              onPress={handleAuthAction}
+            >
+              <Icon name="person-add-outline" size={16} color={colors.accent} />
+              <Text style={styles.registerButtonText}>Registrieren</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {isAuthenticated && (
+          <View style={styles.accountActions}>
+            <TouchableOpacity 
+              style={styles.settingsActionButton}
+              onPress={() => setShowSettingsSheet(true)}
+            >
+              <Icon name="settings-outline" size={16} color={colors.accent} />
+              <Text style={styles.settingsActionText}>Profil bearbeiten</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -176,6 +195,23 @@ const ProfileScreen = () => {
             <Icon name="chevron-forward" size={16} color={colors.grey} />
           </TouchableOpacity>
         </View>
+
+        {/* Konto löschen Bereich für angemeldete Benutzer */}
+        {isAuthenticated && (
+          <View style={styles.dangerSection}>
+            <TouchableOpacity
+              style={styles.deleteAccountButton}
+              onPress={() => setShowSettingsSheet(true)}
+            >
+              <Icon name="trash-outline" size={20} color={colors.error} />
+              <Text style={styles.deleteAccountButtonText}>Konto löschen</Text>
+              <Icon name="chevron-forward" size={16} color={colors.error} />
+            </TouchableOpacity>
+            <Text style={styles.dangerHelperText}>
+              Diese Aktion kann nicht rückgängig gemacht werden
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       <AuthSheet 
@@ -237,19 +273,61 @@ const styles = StyleSheet.create({
   userEmail: {
     color: colors.grey,
     fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  loginPrompt: {
-    backgroundColor: colors.accent + '20',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+  authActions: {
+    flexDirection: 'row',
+    gap: 12,
     marginTop: 8,
   },
-  loginPromptText: {
+  loginButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  registerButton: {
+    backgroundColor: colors.accent + '20',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.accent + '40',
+  },
+  registerButtonText: {
     color: colors.accent,
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  accountActions: {
+    marginTop: 8,
+  },
+  settingsActionButton: {
+    backgroundColor: colors.accent + '20',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.accent + '40',
+  },
+  settingsActionText: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '600',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -322,6 +400,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginLeft: 12,
+  },
+  dangerSection: {
+    marginTop: 24,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: colors.error + '30',
+  },
+  deleteAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: colors.error + '10',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.error + '30',
+  },
+  deleteAccountButtonText: {
+    flex: 1,
+    color: colors.error,
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 12,
+  },
+  dangerHelperText: {
+    fontSize: 12,
+    color: colors.grey,
+    textAlign: 'center',
+    marginTop: 8,
+    paddingHorizontal: 16,
   },
 });
 

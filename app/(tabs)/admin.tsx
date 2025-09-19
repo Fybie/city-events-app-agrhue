@@ -3,15 +3,20 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import EventCard from '../../components/EventCard';
+import SupabaseConnectionSheet from '../../components/SupabaseConnectionSheet';
 import { useEvents } from '../../hooks/useEvents';
+import { useAuth } from '../../hooks/useAuth';
 import { commonStyles, colors } from '../../styles/commonStyles';
 import Icon from '../../components/Icon';
 import { adminUser } from '../../data/mockData';
 import { Platform } from 'react-native';
+import { isSupabaseInitialized } from '../../utils/supabase';
 
 const AdminScreen = () => {
   const { events, deleteEvent, likeEvent, reportEvent, isFavorite, toggleFavorite } = useEvents();
-  const [activeTab, setActiveTab] = useState<'events' | 'reports'>('events');
+  const { checkAuthStatus } = useAuth();
+  const [activeTab, setActiveTab] = useState<'events' | 'reports' | 'settings'>('events');
+  const [isSupabaseSheetVisible, setIsSupabaseSheetVisible] = useState(false);
   const insets = useSafeAreaInsets();
 
   // Berechne den unteren Abstand für die Tab-Bar
@@ -53,6 +58,192 @@ const AdminScreen = () => {
     );
   };
 
+  const handleSupabaseConnected = () => {
+    console.log('Supabase verbunden, prüfe Auth-Status');
+    checkAuthStatus();
+  };
+
+  const renderEventsTab = () => (
+    <ScrollView
+      style={styles.content}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
+      showsVerticalScrollIndicator={false}
+    >
+      {events.map((event) => (
+        <View key={event.id} style={styles.eventContainer}>
+          <EventCard
+            event={event}
+            onPress={() => console.log('Admin viewing event:', event.id)}
+            onLike={() => likeEvent(event.id)}
+            onFavorite={() => toggleFavorite(event)}
+            isFavorite={isFavorite(event.id)}
+            showActions={true}
+            onReport={() => reportEvent(event.id)}
+            onDelete={() => handleDeleteEvent(event.id)}
+          />
+          <View style={styles.adminActions}>
+            <TouchableOpacity
+              style={styles.adminButton}
+              onPress={() => handleBanUser(event.authorId, event.author)}
+            >
+              <Icon name="person-remove" size={16} color={colors.error} />
+              <Text style={styles.adminButtonText}>Benutzer sperren</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.adminButton, styles.deleteButton]}
+              onPress={() => handleDeleteEvent(event.id)}
+            >
+              <Icon name="trash" size={16} color={colors.error} />
+              <Text style={styles.adminButtonText}>Event löschen</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+
+      {events.length === 0 && (
+        <View style={styles.emptyState}>
+          <Icon name="calendar-outline" size={64} color={colors.grey} />
+          <Text style={styles.emptyStateTitle}>Keine Events</Text>
+          <Text style={styles.emptyStateText}>
+            Es wurden noch keine Events erstellt.
+          </Text>
+        </View>
+      )}
+    </ScrollView>
+  );
+
+  const renderReportsTab = () => {
+    const reportedEvents = events.filter(e => e.reported);
+    
+    return (
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {reportedEvents.map((event) => (
+          <View key={event.id} style={styles.eventContainer}>
+            <EventCard
+              event={event}
+              onPress={() => console.log('Admin viewing reported event:', event.id)}
+              onLike={() => likeEvent(event.id)}
+              onFavorite={() => toggleFavorite(event)}
+              isFavorite={isFavorite(event.id)}
+              showActions={true}
+              onReport={() => reportEvent(event.id)}
+              onDelete={() => handleDeleteEvent(event.id)}
+            />
+            <View style={styles.adminActions}>
+              <TouchableOpacity
+                style={styles.adminButton}
+                onPress={() => handleBanUser(event.authorId, event.author)}
+              >
+                <Icon name="person-remove" size={16} color={colors.error} />
+                <Text style={styles.adminButtonText}>Benutzer sperren</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.adminButton, styles.deleteButton]}
+                onPress={() => handleDeleteEvent(event.id)}
+              >
+                <Icon name="trash" size={16} color={colors.error} />
+                <Text style={styles.adminButtonText}>Event löschen</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+
+        {reportedEvents.length === 0 && (
+          <View style={styles.emptyState}>
+            <Icon name="flag-outline" size={64} color={colors.grey} />
+            <Text style={styles.emptyStateTitle}>Keine Meldungen</Text>
+            <Text style={styles.emptyStateText}>
+              Es liegen keine gemeldeten Events vor.
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+    );
+  };
+
+  const renderSettingsTab = () => (
+    <ScrollView
+      style={styles.content}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.settingsSection}>
+        <Text style={styles.settingsSectionTitle}>Datenbankverbindung</Text>
+        
+        <View style={styles.settingsCard}>
+          <View style={styles.settingsCardHeader}>
+            <Icon 
+              name={isSupabaseInitialized() ? "cloud-done" : "cloud-offline"} 
+              size={24} 
+              color={isSupabaseInitialized() ? colors.success : colors.grey} 
+            />
+            <View style={styles.settingsCardText}>
+              <Text style={styles.settingsCardTitle}>Supabase</Text>
+              <Text style={styles.settingsCardSubtitle}>
+                {isSupabaseInitialized() 
+                  ? 'Verbunden - Authentifizierung und Datenspeicherung aktiv'
+                  : 'Nicht verbunden - Nur lokale Mock-Daten verfügbar'
+                }
+              </Text>
+            </View>
+          </View>
+          
+          {!isSupabaseInitialized() && (
+            <TouchableOpacity 
+              style={styles.connectButton}
+              onPress={() => setIsSupabaseSheetVisible(true)}
+            >
+              <Icon name="link" size={16} color="white" />
+              <Text style={styles.connectButtonText}>Jetzt verbinden</Text>
+            </TouchableOpacity>
+          )}
+          
+          {isSupabaseInitialized() && (
+            <View style={styles.connectedIndicator}>
+              <Icon name="checkmark-circle" size={16} color={colors.success} />
+              <Text style={styles.connectedText}>Verbunden</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.infoCard}>
+          <Icon name="information-circle-outline" size={20} color={colors.accent} />
+          <Text style={styles.infoText}>
+            Ohne Supabase-Verbindung funktioniert die App nur mit lokalen Mock-Daten. 
+            Benutzeranmeldung und persistente Datenspeicherung sind nicht verfügbar.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.settingsSection}>
+        <Text style={styles.settingsSectionTitle}>Admin-Funktionen</Text>
+        
+        <View style={styles.featureList}>
+          <View style={styles.featureItem}>
+            <Icon name="shield-checkmark" size={20} color={colors.accent} />
+            <Text style={styles.featureText}>Event-Moderation</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <Icon name="person-remove" size={20} color={colors.accent} />
+            <Text style={styles.featureText}>Benutzer-Verwaltung</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <Icon name="flag" size={20} color={colors.accent} />
+            <Text style={styles.featureText}>Meldungen bearbeiten</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <Icon name="analytics" size={20} color={colors.accent} />
+            <Text style={styles.featureText}>Statistiken einsehen</Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
+  );
+
   return (
     <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
       <View style={styles.header}>
@@ -86,7 +277,7 @@ const AdminScreen = () => {
           onPress={() => setActiveTab('events')}
         >
           <Text style={[styles.tabText, activeTab === 'events' && styles.activeTabText]}>
-            Alle Events
+            Events
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -94,66 +285,28 @@ const AdminScreen = () => {
           onPress={() => setActiveTab('reports')}
         >
           <Text style={[styles.tabText, activeTab === 'reports' && styles.activeTabText]}>
-            Gemeldete Events
+            Meldungen
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'settings' && styles.activeTab]}
+          onPress={() => setActiveTab('settings')}
+        >
+          <Text style={[styles.tabText, activeTab === 'settings' && styles.activeTabText]}>
+            Einstellungen
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {(activeTab === 'events' ? events : events.filter(e => e.reported)).map((event) => (
-          <View key={event.id} style={styles.eventContainer}>
-            <EventCard
-              event={event}
-              onPress={() => console.log('Admin viewing event:', event.id)}
-              onLike={() => likeEvent(event.id)}
-              onFavorite={() => toggleFavorite(event)}
-              isFavorite={isFavorite(event.id)}
-              showActions={true}
-              onReport={() => reportEvent(event.id)}
-              onDelete={() => handleDeleteEvent(event.id)}
-            />
-            <View style={styles.adminActions}>
-              <TouchableOpacity
-                style={styles.adminButton}
-                onPress={() => handleBanUser(event.authorId, event.author)}
-              >
-                <Icon name="person-remove" size={16} color={colors.error} />
-                <Text style={styles.adminButtonText}>Benutzer sperren</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.adminButton, styles.deleteButton]}
-                onPress={() => handleDeleteEvent(event.id)}
-              >
-                <Icon name="trash" size={16} color={colors.error} />
-                <Text style={styles.adminButtonText}>Event löschen</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+      {activeTab === 'events' && renderEventsTab()}
+      {activeTab === 'reports' && renderReportsTab()}
+      {activeTab === 'settings' && renderSettingsTab()}
 
-        {(activeTab === 'reports' ? events.filter(e => e.reported) : events).length === 0 && (
-          <View style={styles.emptyState}>
-            <Icon 
-              name={activeTab === 'events' ? 'calendar-outline' : 'flag-outline'} 
-              size={64} 
-              color={colors.grey} 
-            />
-            <Text style={styles.emptyStateTitle}>
-              {activeTab === 'events' ? 'Keine Events' : 'Keine Meldungen'}
-            </Text>
-            <Text style={styles.emptyStateText}>
-              {activeTab === 'events' 
-                ? 'Es wurden noch keine Events erstellt.'
-                : 'Es liegen keine gemeldeten Events vor.'
-              }
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+      <SupabaseConnectionSheet
+        isVisible={isSupabaseSheetVisible}
+        onClose={() => setIsSupabaseSheetVisible(false)}
+        onConnected={handleSupabaseConnected}
+      />
     </SafeAreaView>
   );
 };
@@ -288,6 +441,99 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  settingsSection: {
+    padding: 16,
+    marginBottom: 24,
+  },
+  settingsSectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  settingsCard: {
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  settingsCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  settingsCardText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  settingsCardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  settingsCardSubtitle: {
+    fontSize: 12,
+    color: colors.grey,
+    lineHeight: 16,
+  },
+  connectButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  connectButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  connectedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  connectedText: {
+    color: colors.success,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.accent + '10',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.accent + '30',
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.text,
+    lineHeight: 16,
+    marginLeft: 8,
+  },
+  featureList: {
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: 12,
+    padding: 16,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  featureText: {
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 12,
+    fontWeight: '500',
   },
 });
 
