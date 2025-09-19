@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useEvents } from '../../hooks/useEvents';
 import { commonStyles, colors } from '../../styles/commonStyles';
@@ -9,6 +9,7 @@ import Icon from '../../components/Icon';
 import EventCard from '../../components/EventCard';
 import CreateEventSheet from '../../components/CreateEventSheet';
 import LocationFilter from '../../components/LocationFilter';
+import { Platform } from 'react-native';
 
 const EventsScreen = () => {
   const {
@@ -27,6 +28,10 @@ const EventsScreen = () => {
 
   const [isCreateSheetVisible, setIsCreateSheetVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  // Berechne den unteren Abstand für die Tab-Bar
+  const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
 
   const onRefresh = () => {
     console.log('Refreshing events');
@@ -52,7 +57,7 @@ const EventsScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[commonStyles.container, styles.container]}>
+    <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Events</Text>
@@ -81,6 +86,7 @@ const EventsScreen = () => {
 
       <ScrollView
         style={styles.content}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -110,8 +116,6 @@ const EventsScreen = () => {
             />
           ))
         )}
-
-        <View style={styles.bottomSpacing} />
       </ScrollView>
 
       <CreateEventSheet
@@ -171,6 +175,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -190,9 +197,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
-  },
-  bottomSpacing: {
-    height: 100,
   },
 });
 
