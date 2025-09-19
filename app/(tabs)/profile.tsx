@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import EventCard from '../../components/EventCard';
 import { useEvents } from '../../hooks/useEvents';
 import { commonStyles, colors } from '../../styles/commonStyles';
@@ -111,6 +112,21 @@ const ProfileScreen = () => {
             />
           ))
         )}
+
+        {/* Legal Section */}
+        <View style={styles.legalSection}>
+          <TouchableOpacity
+            style={styles.legalButton}
+            onPress={() => {
+              console.log('Navigating to Impressum');
+              router.push('/impressum');
+            }}
+          >
+            <Icon name="document-text-outline" size={20} color={colors.grey} />
+            <Text style={styles.legalButtonText}>Impressum</Text>
+            <Icon name="chevron-forward" size={16} color={colors.grey} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -206,6 +222,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  legalSection: {
+    marginTop: 32,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: colors.grey + '30',
+  },
+  legalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: 12,
+    marginHorizontal: 16,
+  },
+  legalButtonText: {
+    flex: 1,
+    color: colors.grey,
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 12,
   },
 });
 
