@@ -5,12 +5,10 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router';
 import Icon from '../../components/Icon';
 import ProfileSettingsSheet from '../../components/ProfileSettingsSheet';
-import AuthSheet from '../../components/AuthSheet';
 import EventCard from '../../components/EventCard';
 import { useEvents } from '../../hooks/useEvents';
 import { useAuth } from '../../hooks/useAuth';
 import { commonStyles, colors } from '../../styles/commonStyles';
-import { isSupabaseInitialized } from '../../utils/supabase';
 
 const styles = StyleSheet.create({
   container: {
@@ -141,42 +139,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
-  loginPrompt: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-    margin: 20,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-  },
-  loginPromptText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  loginButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
 });
 
 export default function ProfileScreen() {
   const { events, deleteEvent } = useEvents();
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [showSettingsSheet, setShowSettingsSheet] = useState(false);
-  const [showAuthSheet, setShowAuthSheet] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const userEvents = events.filter(event => event.authorId === user?.id);
+  // If user is not authenticated, redirect to auth screen
+  if (!user) {
+    router.replace('/auth');
+    return null;
+  }
+
+  const userEvents = events.filter(event => event.authorId === user.id);
   const totalLikes = userEvents.reduce((sum, event) => sum + event.likes, 0);
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -194,7 +171,7 @@ export default function ProfileScreen() {
           onPress: async () => {
             const result = await signOut();
             if (result.success) {
-              router.replace('/(tabs)/');
+              router.replace('/auth');
             }
           }
         }
@@ -210,37 +187,6 @@ export default function ProfileScreen() {
       .toUpperCase()
       .slice(0, 2);
   };
-
-  if (!isAuthenticated || !user) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profil</Text>
-          <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-            <Icon name="arrow-left" size={20} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.loginPrompt}>
-          <Icon name="user" size={64} color={colors.textSecondary} />
-          <Text style={styles.loginPromptText}>
-            Melden Sie sich an, um Ihr Profil zu sehen und Veranstaltungen zu verwalten.
-          </Text>
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={() => setShowAuthSheet(true)}
-          >
-            <Text style={styles.loginButtonText}>Anmelden</Text>
-          </TouchableOpacity>
-        </View>
-
-        <AuthSheet
-          isVisible={showAuthSheet}
-          onClose={() => setShowAuthSheet(false)}
-        />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

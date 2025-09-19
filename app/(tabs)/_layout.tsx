@@ -1,19 +1,26 @@
 
 import React from 'react';
 import { Tabs } from 'expo-router';
-import Icon from '../../components/Icon';
 import { colors } from '../../styles/commonStyles';
+import Icon from '../../components/Icon';
 import { useAuth } from '../../hooks/useAuth';
+import { router } from 'expo-router';
 
 export default function TabLayout() {
-  console.log('📱 TabLayout rendering...');
-  
-  // Always call hooks at the top level
-  const { user, isAuthenticated } = useAuth();
-  console.log('✅ TabLayout auth hook initialized');
+  const { isAuthenticated, loading } = useAuth();
 
-  try {
-    return (
+  // If still loading, don't render anything
+  if (loading) {
+    return null;
+  }
+
+  // If not authenticated, redirect to auth screen
+  if (!isAuthenticated) {
+    router.replace('/auth');
+    return null;
+  }
+
+  return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
@@ -28,7 +35,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '600',
+          fontWeight: '500',
           marginTop: 4,
         },
         headerShown: false,
@@ -66,15 +73,11 @@ export default function TabLayout() {
         options={{
           title: 'Admin',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="shield" size={size} color={color} />
+            <Icon name="settings" size={size} color={color} />
           ),
-          href: user?.isAdmin ? '/(tabs)/admin' : null,
+          href: null, // Hide from tab bar by default
         }}
-        />
-      </Tabs>
-    );
-  } catch (error) {
-    console.error('❌ Error in TabLayout:', error);
-    return null;
-  }
+      />
+    </Tabs>
+  );
 }

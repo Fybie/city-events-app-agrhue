@@ -8,7 +8,6 @@ import Icon from '../../components/Icon';
 import CreateEventSheet from '../../components/CreateEventSheet';
 import EventCard from '../../components/EventCard';
 import LocationFilter from '../../components/LocationFilter';
-import AuthSheet from '../../components/AuthSheet';
 import { useEvents } from '../../hooks/useEvents';
 import { useAuth } from '../../hooks/useAuth';
 import { commonStyles, colors } from '../../styles/commonStyles';
@@ -118,12 +117,17 @@ export default function EventsScreen() {
   const { user, isAuthenticated } = useAuth();
   const [selectedLocation, setSelectedLocation] = useState<string>('Alle Städte');
   const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const [showAuthSheet, setShowAuthSheet] = useState(false);
   const insets = useSafeAreaInsets();
 
   console.log('✅ EventsScreen hooks initialized successfully');
   console.log('📊 Events loaded:', events?.length || 0);
   console.log('👤 User authenticated:', isAuthenticated, user?.name || 'No user');
+
+  // If user is not authenticated, redirect to auth screen
+  if (!isAuthenticated) {
+    router.replace('/auth');
+    return null;
+  }
 
   try {
     const filteredEvents = events.filter(event => {
@@ -147,9 +151,8 @@ export default function EventsScreen() {
     };
 
     const handleCreateEvent = async (eventData: any) => {
-      if (!isAuthenticated || !user) {
-        Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Veranstaltungen zu erstellen.');
-        setShowAuthSheet(true);
+      if (!user) {
+        Alert.alert('Fehler', 'Benutzerinformationen nicht verfügbar.');
         return;
       }
 
@@ -168,14 +171,9 @@ export default function EventsScreen() {
       setSelectedLocation(location);
     };
 
-    const handleAuthAction = () => {
-      setShowAuthSheet(true);
-    };
-
     const handleLikeEvent = async (eventId: string) => {
-      if (!isAuthenticated || !user) {
-        Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Veranstaltungen zu liken.');
-        setShowAuthSheet(true);
+      if (!user) {
+        Alert.alert('Fehler', 'Benutzerinformationen nicht verfügbar.');
         return;
       }
 
@@ -186,9 +184,8 @@ export default function EventsScreen() {
       await deleteEvent(eventId);
     };
 
-    const canCreateEvent = isAuthenticated && user;
     const canDeleteEvent = (event: any) => {
-      return isAuthenticated && user && (user.id === event.authorId || user.isAdmin);
+      return user && (user.id === event.authorId || user.isAdmin);
     };
 
     return (
@@ -212,18 +209,12 @@ export default function EventsScreen() {
             </Text>
           </View>
           <View style={styles.headerButtons}>
-            {!isAuthenticated ? (
-              <TouchableOpacity style={styles.headerButton} onPress={handleAuthAction}>
-                <Icon name="log-in" size={20} color={colors.primary} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity 
-                style={styles.headerButton} 
-                onPress={() => router.push('/(tabs)/profile')}
-              >
-                <Icon name="user" size={20} color={colors.primary} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity 
+              style={styles.headerButton} 
+              onPress={() => router.push('/(tabs)/profile')}
+            >
+              <Icon name="user" size={20} color={colors.primary} />
+            </TouchableOpacity>
             {user?.isAdmin && (
               <TouchableOpacity 
                 style={styles.headerButton} 
@@ -282,26 +273,18 @@ export default function EventsScreen() {
         </View>
 
         {/* Create Event FAB */}
-        {canCreateEvent && (
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => setShowCreateSheet(true)}
-          >
-            <Icon name="plus" size={24} color="white" />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowCreateSheet(true)}
+        >
+          <Icon name="plus" size={24} color="white" />
+        </TouchableOpacity>
 
         {/* Create Event Sheet */}
         <CreateEventSheet
           isVisible={showCreateSheet}
           onClose={() => setShowCreateSheet(false)}
           onCreateEvent={handleCreateEvent}
-        />
-
-        {/* Auth Sheet */}
-        <AuthSheet
-          isVisible={showAuthSheet}
-          onClose={() => setShowAuthSheet(false)}
         />
       </SafeAreaView>
     );
