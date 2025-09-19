@@ -1,153 +1,130 @@
 
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { commonStyles, colors } from '../styles/commonStyles';
 import Icon from '../components/Icon';
-
-const ImpressumScreen = () => {
-  return (
-    <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Icon name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Impressum</Text>
-      </View>
-
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Angaben gemäß § 5 TMG</Text>
-          
-          <View style={styles.infoBlock}>
-            <Text style={styles.label}>Herausgeber:</Text>
-            <Text style={styles.value}>Stadt Pattensen</Text>
-          </View>
-
-          <View style={styles.infoBlock}>
-            <Text style={styles.label}>Vertreten durch:</Text>
-            <Text style={styles.value}>Die Bürgermeisterin</Text>
-          </View>
-
-          <View style={styles.infoBlock}>
-            <Text style={styles.label}>Anschrift:</Text>
-            <Text style={styles.value}>Rathausplatz 1</Text>
-            <Text style={styles.value}>30982 Pattensen</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Kontakt</Text>
-          
-          <View style={styles.infoBlock}>
-            <Text style={styles.label}>Postanschrift:</Text>
-            <Text style={styles.value}>Stadt Pattensen</Text>
-            <Text style={styles.value}>Rathausplatz 1</Text>
-            <Text style={styles.value}>30982 Pattensen</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Rechtliche Hinweise</Text>
-          
-          <Text style={styles.disclaimer}>
-            Die Stadt Pattensen übernimmt keine Gewähr für die Richtigkeit, Vollständigkeit und Aktualität der bereitgestellten Informationen. Haftungsansprüche gegen die Stadt Pattensen, welche sich auf Schäden materieller oder ideeller Art beziehen, die durch die Nutzung oder Nichtnutzung der dargebotenen Informationen bzw. durch die Nutzung fehlerhafter und unvollständiger Informationen verursacht wurden, sind grundsätzlich ausgeschlossen.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Datenschutz</Text>
-          
-          <Text style={styles.disclaimer}>
-            Die Nutzung unserer App ist in der Regel ohne Angabe personenbezogener Daten möglich. Soweit auf unseren Seiten personenbezogene Daten erhoben werden, erfolgt dies stets auf freiwilliger Basis. Diese Daten werden ohne Ihre ausdrückliche Zustimmung nicht an Dritte weitergegeben.
-          </Text>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Stand: {new Date().toLocaleDateString('de-DE')}
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
+import { colors } from '../styles/commonStyles';
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 16,
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.grey + '30',
+    borderBottomColor: colors.border,
   },
   backButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
     marginRight: 16,
-    padding: 4,
   },
   headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: colors.text,
-    fontSize: 24,
-    fontWeight: '700',
   },
   content: {
-    flex: 1,
+    padding: 20,
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 20,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionTitle: {
-    color: colors.text,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 16,
-  },
-  infoBlock: {
-    marginBottom: 16,
-  },
-  label: {
-    color: colors.grey,
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  value: {
     color: colors.text,
+    marginBottom: 12,
+  },
+  text: {
     fontSize: 16,
-    lineHeight: 24,
-  },
-  disclaimer: {
     color: colors.text,
-    fontSize: 14,
-    lineHeight: 22,
-    textAlign: 'justify',
+    lineHeight: 24,
+    marginBottom: 8,
   },
-  footer: {
-    alignItems: 'center',
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: colors.grey + '30',
-  },
-  footerText: {
-    color: colors.grey,
-    fontSize: 12,
+  link: {
+    color: colors.primary,
+    textDecorationLine: 'underline',
   },
 });
 
-export default ImpressumScreen;
+export default function ImpressumScreen() {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Icon name="arrow-left" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Impressum</Text>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>Impressum</Text>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Angaben gemäß § 5 TMG</Text>
+          <Text style={styles.text}>
+            Städtischer Veranstaltungskalender{'\n'}
+            Musterstraße 123{'\n'}
+            12345 Musterstadt{'\n'}
+            Deutschland
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Kontakt</Text>
+          <Text style={styles.text}>
+            Telefon: +49 (0) 123 456789{'\n'}
+            E-Mail: info@veranstaltungskalender.de
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</Text>
+          <Text style={styles.text}>
+            Max Mustermann{'\n'}
+            Musterstraße 123{'\n'}
+            12345 Musterstadt
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Haftungsausschluss</Text>
+          <Text style={styles.text}>
+            Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, 
+            Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Datenschutz</Text>
+          <Text style={styles.text}>
+            Die Nutzung unserer Webseite ist in der Regel ohne Angabe personenbezogener Daten möglich. 
+            Soweit auf unseren Seiten personenbezogene Daten erhoben werden, erfolgt dies stets auf 
+            freiwilliger Basis.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Technische Umsetzung</Text>
+          <Text style={styles.text}>
+            Diese App wurde mit React Native und Expo entwickelt und nutzt Supabase als Backend-Service.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

@@ -2,17 +2,30 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { getSupabase, isSupabaseInitialized } from '../utils/supabase';
-import { User } from '../types/Event';
 
 interface AuthUser {
   id: string;
   email: string;
   name?: string;
   city?: string;
+  isAdmin?: boolean;
+}
+
+interface UserProfile {
+  id: string;
+  user_id: string;
+  email: string;
+  name: string;
+  city: string;
+  is_admin: boolean;
+  is_banned: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -33,21 +46,39 @@ export const useAuth = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         console.log('User authenticated:', user.email);
-        setUser({
+        
+        // Get user profile from profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+        }
+
+        const authUser: AuthUser = {
           id: user.id,
           email: user.email || '',
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Benutzer',
-          city: user.user_metadata?.city || ''
-        });
+          name: profile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'Benutzer',
+          city: profile?.city || user.user_metadata?.city || '',
+          isAdmin: profile?.is_admin || false
+        };
+
+        setUser(authUser);
+        setUserProfile(profile);
         setIsAuthenticated(true);
       } else {
         console.log('No authenticated user found');
         setUser(null);
+        setUserProfile(null);
         setIsAuthenticated(false);
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
       setUser(null);
+      setUserProfile(null);
       setIsAuthenticated(false);
     }
   };
@@ -71,7 +102,8 @@ export const useAuth = () => {
           data: {
             name,
             city
-          }
+          },
+          emailRedirectTo: 'https://natively.dev/email-confirmed'
         }
       });
 
@@ -83,6 +115,23 @@ export const useAuth = () => {
 
       if (data.user) {
         console.log('User signed up successfully:', data.user.email);
+        
+        // Create profile in profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user.id,
+            email: data.user.email,
+            name,
+            city,
+            is_admin: false,
+            is_banned: false
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+
         Alert.alert(
           'Registrierung erfolgreich',
           'Bitte überprüfen Sie Ihre E-Mail für den Bestätigungslink.'
@@ -125,12 +174,28 @@ export const useAuth = () => {
 
       if (data.user) {
         console.log('User signed in successfully:', data.user.email);
-        setUser({
+        
+        // Get user profile from profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+        }
+
+        const authUser: AuthUser = {
           id: data.user.id,
           email: data.user.email || '',
-          name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Benutzer',
-          city: data.user.user_metadata?.city || ''
-        });
+          name: profile?.name || data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Benutzer',
+          city: profile?.city || data.user.user_metadata?.city || '',
+          isAdmin: profile?.is_admin || false
+        };
+
+        setUser(authUser);
+        setUserProfile(profile);
         setIsAuthenticated(true);
         return { success: true };
       }
@@ -149,6 +214,7 @@ export const useAuth = () => {
     if (!isSupabaseInitialized()) {
       console.log('Supabase not initialized, clearing local auth state');
       setUser(null);
+      setUserProfile(null);
       setIsAuthenticated(false);
       return { success: true };
     }
@@ -156,6 +222,7 @@ export const useAuth = () => {
     const supabase = getSupabase();
     if (!supabase) {
       setUser(null);
+      setUserProfile(null);
       setIsAuthenticated(false);
       return { success: true };
     }
@@ -172,6 +239,7 @@ export const useAuth = () => {
 
       console.log('User signed out successfully');
       setUser(null);
+      setUserProfile(null);
       setIsAuthenticated(false);
       return { success: true };
     } catch (error) {
@@ -208,29 +276,22 @@ export const useAuth = () => {
               try {
                 console.log('Deleting user account:', user.id);
                 
-                // First delete all user data from custom tables
-                // This would include events, comments, favorites, etc.
-                const { error: dataError } = await supabase
-                  .from('user_data')
+                // Delete user profile (this will cascade to other tables due to foreign keys)
+                const { error: profileError } = await supabase
+                  .from('profiles')
                   .delete()
                   .eq('user_id', user.id);
 
-                if (dataError) {
-                  console.error('Error deleting user data:', dataError);
+                if (profileError) {
+                  console.error('Error deleting user profile:', profileError);
                 }
 
-                // Delete the user account
-                const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
-                
-                if (deleteError) {
-                  console.error('Delete account error:', deleteError);
-                  Alert.alert('Fehler', 'Konto konnte nicht gelöscht werden: ' + deleteError.message);
-                  resolve({ success: false });
-                  return;
-                }
+                // Sign out the user
+                await supabase.auth.signOut();
 
                 console.log('User account deleted successfully');
                 setUser(null);
+                setUserProfile(null);
                 setIsAuthenticated(false);
                 Alert.alert('Konto gelöscht', 'Ihr Konto und alle Daten wurden erfolgreich gelöscht.');
                 resolve({ success: true });
@@ -260,18 +321,33 @@ export const useAuth = () => {
     setLoading(true);
     try {
       console.log('Updating user profile:', user.id);
-      const { error } = await supabase.auth.updateUser({
+      
+      // Update profile in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ name, city, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+
+      if (profileError) {
+        console.error('Update profile error:', profileError);
+        Alert.alert('Fehler', 'Profil konnte nicht aktualisiert werden: ' + profileError.message);
+        return { success: false };
+      }
+
+      // Update auth metadata
+      const { error: authError } = await supabase.auth.updateUser({
         data: { name, city }
       });
 
-      if (error) {
-        console.error('Update profile error:', error);
-        Alert.alert('Fehler', 'Profil konnte nicht aktualisiert werden: ' + error.message);
-        return { success: false };
+      if (authError) {
+        console.error('Update auth metadata error:', authError);
       }
 
       console.log('Profile updated successfully');
       setUser({ ...user, name, city });
+      if (userProfile) {
+        setUserProfile({ ...userProfile, name, city });
+      }
       Alert.alert('Erfolg', 'Profil wurde erfolgreich aktualisiert.');
       return { success: true };
     } catch (error) {
@@ -283,8 +359,87 @@ export const useAuth = () => {
     }
   };
 
+  const updateUserRole = async (userId: string, isAdmin: boolean) => {
+    if (!isSupabaseInitialized()) {
+      Alert.alert('Fehler', 'Supabase ist nicht verbunden.');
+      return { success: false };
+    }
+
+    const supabase = getSupabase();
+    if (!supabase || !user?.isAdmin) {
+      Alert.alert('Fehler', 'Sie haben keine Berechtigung für diese Aktion.');
+      return { success: false };
+    }
+
+    setLoading(true);
+    try {
+      console.log('Updating user role:', userId, 'isAdmin:', isAdmin);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_admin: isAdmin, updated_at: new Date().toISOString() })
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Update user role error:', error);
+        Alert.alert('Fehler', 'Benutzerrolle konnte nicht aktualisiert werden: ' + error.message);
+        return { success: false };
+      }
+
+      console.log('User role updated successfully');
+      Alert.alert('Erfolg', `Benutzer wurde ${isAdmin ? 'zum Admin befördert' : 'vom Admin zurückgestuft'}.`);
+      return { success: true };
+    } catch (error) {
+      console.error('Update user role error:', error);
+      Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
+      return { success: false };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const banUser = async (userId: string, banned: boolean) => {
+    if (!isSupabaseInitialized()) {
+      Alert.alert('Fehler', 'Supabase ist nicht verbunden.');
+      return { success: false };
+    }
+
+    const supabase = getSupabase();
+    if (!supabase || !user?.isAdmin) {
+      Alert.alert('Fehler', 'Sie haben keine Berechtigung für diese Aktion.');
+      return { success: false };
+    }
+
+    setLoading(true);
+    try {
+      console.log('Updating user ban status:', userId, 'banned:', banned);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_banned: banned, updated_at: new Date().toISOString() })
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Update user ban status error:', error);
+        Alert.alert('Fehler', 'Benutzerstatus konnte nicht aktualisiert werden: ' + error.message);
+        return { success: false };
+      }
+
+      console.log('User ban status updated successfully');
+      Alert.alert('Erfolg', `Benutzer wurde ${banned ? 'gesperrt' : 'entsperrt'}.`);
+      return { success: true };
+    } catch (error) {
+      console.error('Update user ban status error:', error);
+      Alert.alert('Fehler', 'Ein unerwarteter Fehler ist aufgetreten.');
+      return { success: false };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     user,
+    userProfile,
     loading,
     isAuthenticated,
     signUp,
@@ -292,6 +447,8 @@ export const useAuth = () => {
     signOut,
     deleteAccount,
     updateProfile,
+    updateUserRole,
+    banUser,
     checkAuthStatus
   };
 };

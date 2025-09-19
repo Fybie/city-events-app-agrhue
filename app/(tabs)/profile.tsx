@@ -3,435 +3,350 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import EventCard from '../../components/EventCard';
-import AuthSheet from '../../components/AuthSheet';
+import Icon from '../../components/Icon';
 import ProfileSettingsSheet from '../../components/ProfileSettingsSheet';
+import AuthSheet from '../../components/AuthSheet';
+import EventCard from '../../components/EventCard';
 import { useEvents } from '../../hooks/useEvents';
 import { useAuth } from '../../hooks/useAuth';
 import { commonStyles, colors } from '../../styles/commonStyles';
-import Icon from '../../components/Icon';
-import { currentUser } from '../../data/mockData';
-import { Platform } from 'react-native';
 import { isSupabaseInitialized } from '../../utils/supabase';
-
-const ProfileScreen = () => {
-  const { events, deleteEvent, likeEvent, reportEvent, isFavorite, toggleFavorite } = useEvents();
-  const { user, isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState<'created' | 'favorites'>('created');
-  const [showAuthSheet, setShowAuthSheet] = useState(false);
-  const [showSettingsSheet, setShowSettingsSheet] = useState(false);
-  const insets = useSafeAreaInsets();
-
-  // Berechne den unteren Abstand für die Tab-Bar
-  const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
-
-  // Verwende authentifizierten Benutzer oder Fallback zu Mock-Benutzer
-  const displayUser = isAuthenticated && user ? user : currentUser;
-  const userId = isAuthenticated && user ? user.id : currentUser.id;
-
-  // Filtere Events basierend auf dem aktuellen Benutzer
-  const userEvents = events.filter(event => event.authorId === userId);
-  const favoriteEvents = events.filter(event => isFavorite(event.id));
-
-  const handleDeleteEvent = (eventId: string) => {
-    Alert.alert(
-      'Event löschen',
-      'Sind Sie sicher, dass Sie dieses Event löschen möchten?',
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        { 
-          text: 'Löschen', 
-          style: 'destructive',
-          onPress: () => {
-            console.log('Lösche Event:', eventId);
-            deleteEvent(eventId);
-          }
-        }
-      ]
-    );
-  };
-
-  const handleAuthAction = () => {
-    if (isAuthenticated) {
-      setShowSettingsSheet(true);
-    } else {
-      if (!isSupabaseInitialized()) {
-        Alert.alert(
-          'Supabase erforderlich',
-          'Um sich anzumelden oder zu registrieren, müssen Sie zuerst Supabase in den Admin-Einstellungen aktivieren.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-      setShowAuthSheet(true);
-    }
-  };
-
-  const displayEvents = activeTab === 'created' ? userEvents : favoriteEvents;
-
-  return (
-    <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profil</Text>
-        <TouchableOpacity onPress={handleAuthAction} style={styles.settingsButton}>
-          <Icon 
-            name={isAuthenticated ? "settings-outline" : "log-in-outline"} 
-            size={24} 
-            color={colors.text} 
-          />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.profileInfo}>
-        <View style={styles.avatar}>
-          <Icon name="person" size={32} color="white" />
-        </View>
-        <Text style={styles.userName}>{displayUser.name}</Text>
-        <Text style={styles.userEmail}>
-          {isAuthenticated && user ? user.email : displayUser.email}
-        </Text>
-        {!isAuthenticated && (
-          <View style={styles.authActions}>
-            <TouchableOpacity 
-              style={styles.loginButton}
-              onPress={handleAuthAction}
-            >
-              <Icon name="log-in-outline" size={16} color="white" />
-              <Text style={styles.loginButtonText}>Anmelden</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.registerButton}
-              onPress={handleAuthAction}
-            >
-              <Icon name="person-add-outline" size={16} color={colors.accent} />
-              <Text style={styles.registerButtonText}>Registrieren</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        {isAuthenticated && (
-          <View style={styles.accountActions}>
-            <TouchableOpacity 
-              style={styles.settingsActionButton}
-              onPress={() => setShowSettingsSheet(true)}
-            >
-              <Icon name="settings-outline" size={16} color={colors.accent} />
-              <Text style={styles.settingsActionText}>Profil bearbeiten</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'created' && styles.activeTab]}
-          onPress={() => setActiveTab('created')}
-        >
-          <Text style={[styles.tabText, activeTab === 'created' && styles.activeTabText]}>
-            Meine Events ({userEvents.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
-          onPress={() => setActiveTab('favorites')}
-        >
-          <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
-            Favoriten ({favoriteEvents.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {displayEvents.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon 
-              name={activeTab === 'created' ? 'calendar-outline' : 'heart-outline'} 
-              size={64} 
-              color={colors.grey} 
-            />
-            <Text style={styles.emptyStateTitle}>
-              {activeTab === 'created' ? 'Keine Events erstellt' : 'Keine Favoriten'}
-            </Text>
-            <Text style={styles.emptyStateText}>
-              {activeTab === 'created' 
-                ? 'Sie haben noch keine Events erstellt. Erstellen Sie Ihr erstes Event!'
-                : 'Sie haben noch keine Events favorisiert. Markieren Sie Events als Favoriten!'
-              }
-            </Text>
-          </View>
-        ) : (
-          displayEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onPress={() => {
-                console.log('Event gedrückt:', event.id);
-                router.push(`/event/${event.id}`);
-              }}
-              onLike={() => likeEvent(event.id)}
-              onFavorite={() => toggleFavorite(event)}
-              isFavorite={isFavorite(event.id)}
-              showActions={activeTab === 'created'}
-              onReport={() => reportEvent(event.id)}
-              onDelete={() => handleDeleteEvent(event.id)}
-            />
-          ))
-        )}
-
-        {/* Rechtlicher Bereich */}
-        <View style={styles.legalSection}>
-          <TouchableOpacity
-            style={styles.legalButton}
-            onPress={() => {
-              console.log('Navigation zum Impressum');
-              router.push('/impressum');
-            }}
-          >
-            <Icon name="document-text-outline" size={20} color={colors.grey} />
-            <Text style={styles.legalButtonText}>Impressum</Text>
-            <Icon name="chevron-forward" size={16} color={colors.grey} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Konto löschen Bereich für angemeldete Benutzer */}
-        {isAuthenticated && (
-          <View style={styles.dangerSection}>
-            <TouchableOpacity
-              style={styles.deleteAccountButton}
-              onPress={() => setShowSettingsSheet(true)}
-            >
-              <Icon name="trash-outline" size={20} color={colors.error} />
-              <Text style={styles.deleteAccountButtonText}>Konto löschen</Text>
-              <Icon name="chevron-forward" size={16} color={colors.error} />
-            </TouchableOpacity>
-            <Text style={styles.dangerHelperText}>
-              Diese Aktion kann nicht rückgängig gemacht werden
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-
-      <AuthSheet 
-        isVisible={showAuthSheet} 
-        onClose={() => setShowAuthSheet(false)} 
-      />
-
-      <ProfileSettingsSheet 
-        isVisible={showSettingsSheet} 
-        onClose={() => setShowSettingsSheet(false)} 
-      />
-    </SafeAreaView>
-  );
-};
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 16,
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.grey + '30',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
-    color: colors.text,
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: 'bold',
+    color: colors.text,
   },
-  settingsButton: {
+  headerButton: {
     padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
   },
-  profileInfo: {
+  profileSection: {
+    backgroundColor: colors.surface,
+    margin: 20,
+    borderRadius: 16,
+    padding: 20,
+  },
+  profileHeader: {
     alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grey + '30',
+    marginBottom: 20,
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
+  avatarText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: 'white',
+  },
   userName: {
-    color: colors.text,
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: colors.text,
     marginBottom: 4,
   },
   userEmail: {
-    color: colors.grey,
     fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  userBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.primary + '20',
+  },
+  userBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  profileStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
+  actionButtonText: {
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginHorizontal: 20,
+    marginTop: 20,
     marginBottom: 16,
   },
-  authActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
+  eventsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  loginPrompt: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    margin: 20,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+  },
+  loginPromptText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 20,
   },
   loginButton: {
     backgroundColor: colors.primary,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   loginButtonText: {
     color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  registerButton: {
-    backgroundColor: colors.accent + '20',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.accent + '40',
-  },
-  registerButtonText: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  accountActions: {
-    marginTop: 8,
-  },
-  settingsActionButton: {
-    backgroundColor: colors.accent + '20',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.accent + '40',
-  },
-  settingsActionText: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grey + '30',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: colors.accent,
-  },
-  tabText: {
-    color: colors.grey,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 64,
-  },
-  emptyStateTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateText: {
-    color: colors.grey,
     fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  legalSection: {
-    marginTop: 32,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: colors.grey + '30',
-  },
-  legalButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: 12,
-    marginHorizontal: 16,
-  },
-  legalButtonText: {
-    flex: 1,
-    color: colors.grey,
-    fontSize: 16,
-    fontWeight: '500',
-    marginLeft: 12,
-  },
-  dangerSection: {
-    marginTop: 24,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: colors.error + '30',
-  },
-  deleteAccountButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: colors.error + '10',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    borderWidth: 1,
-    borderColor: colors.error + '30',
-  },
-  deleteAccountButtonText: {
-    flex: 1,
-    color: colors.error,
-    fontSize: 16,
-    fontWeight: '500',
-    marginLeft: 12,
-  },
-  dangerHelperText: {
-    fontSize: 12,
-    color: colors.grey,
-    textAlign: 'center',
-    marginTop: 8,
-    paddingHorizontal: 16,
+    fontWeight: '600',
   },
 });
 
-export default ProfileScreen;
+export default function ProfileScreen() {
+  const { events, deleteEvent } = useEvents();
+  const { user, isAuthenticated, signOut } = useAuth();
+  const [showSettingsSheet, setShowSettingsSheet] = useState(false);
+  const [showAuthSheet, setShowAuthSheet] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  const userEvents = events.filter(event => event.authorId === user?.id);
+  const totalLikes = userEvents.reduce((sum, event) => sum + event.likes, 0);
+
+  const handleDeleteEvent = async (eventId: string) => {
+    await deleteEvent(eventId);
+  };
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Abmelden',
+      'Möchten Sie sich wirklich abmelden?',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Abmelden',
+          onPress: async () => {
+            const result = await signOut();
+            if (result.success) {
+              router.replace('/(tabs)/');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (!isAuthenticated || !user) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profil</Text>
+          <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+            <Icon name="arrow-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.loginPrompt}>
+          <Icon name="user" size={64} color={colors.textSecondary} />
+          <Text style={styles.loginPromptText}>
+            Melden Sie sich an, um Ihr Profil zu sehen und Veranstaltungen zu verwalten.
+          </Text>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => setShowAuthSheet(true)}
+          >
+            <Text style={styles.loginButtonText}>Anmelden</Text>
+          </TouchableOpacity>
+        </View>
+
+        <AuthSheet
+          isVisible={showAuthSheet}
+          onClose={() => setShowAuthSheet(false)}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Profil</Text>
+        <TouchableOpacity 
+          style={styles.headerButton} 
+          onPress={() => setShowSettingsSheet(true)}
+        >
+          <Icon name="settings" size={20} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Profile Section */}
+        <View style={styles.profileSection}>
+          <View style={styles.profileHeader}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {getInitials(user.name || 'U')}
+              </Text>
+            </View>
+            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userEmail}>{user.email}</Text>
+            {user.isAdmin && (
+              <View style={styles.userBadge}>
+                <Text style={styles.userBadgeText}>Administrator</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.profileStats}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{userEvents.length}</Text>
+              <Text style={styles.statLabel}>Veranstaltungen</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{totalLikes}</Text>
+              <Text style={styles.statLabel}>Likes erhalten</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{user.city || 'Keine'}</Text>
+              <Text style={styles.statLabel}>Stadt</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        {user.isAdmin && (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/(tabs)/admin')}
+          >
+            <Icon name="shield" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>Admin-Bereich</Text>
+            <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => setShowSettingsSheet(true)}
+        >
+          <Icon name="user" size={20} color={colors.primary} />
+          <Text style={styles.actionButtonText}>Profil bearbeiten</Text>
+          <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleSignOut}
+        >
+          <Icon name="log-out" size={20} color={colors.error} />
+          <Text style={[styles.actionButtonText, { color: colors.error }]}>Abmelden</Text>
+          <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        {/* User's Events */}
+        <Text style={styles.sectionTitle}>Meine Veranstaltungen</Text>
+        <View style={styles.eventsContainer}>
+          {userEvents.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name="calendar" size={48} color={colors.textSecondary} />
+              <Text style={styles.emptyStateText}>
+                Sie haben noch keine Veranstaltungen erstellt.
+              </Text>
+            </View>
+          ) : (
+            userEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onPress={() => router.push(`/event/${event.id}`)}
+                onLike={() => {}}
+                showActions={true}
+                onDelete={() => handleDeleteEvent(event.id)}
+              />
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      <ProfileSettingsSheet
+        isVisible={showSettingsSheet}
+        onClose={() => setShowSettingsSheet(false)}
+      />
+    </SafeAreaView>
+  );
+}

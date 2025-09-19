@@ -1,57 +1,281 @@
 
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import EventCard from '../../components/EventCard';
+import { router } from 'expo-router';
+import Icon from '../../components/Icon';
 import SupabaseConnectionSheet from '../../components/SupabaseConnectionSheet';
+import EventCard from '../../components/EventCard';
+import UserManagementSheet from '../../components/UserManagementSheet';
 import { useEvents } from '../../hooks/useEvents';
 import { useAuth } from '../../hooks/useAuth';
+import { useUsers } from '../../hooks/useUsers';
 import { commonStyles, colors } from '../../styles/commonStyles';
-import Icon from '../../components/Icon';
-import { adminUser } from '../../data/mockData';
-import { Platform } from 'react-native';
 import { isSupabaseInitialized } from '../../utils/supabase';
 
-const AdminScreen = () => {
-  const { events, deleteEvent, likeEvent, reportEvent, isFavorite, toggleFavorite } = useEvents();
-  const { checkAuthStatus } = useAuth();
-  const [activeTab, setActiveTab] = useState<'events' | 'reports' | 'settings'>('events');
-  const [isSupabaseSheetVisible, setIsSupabaseSheetVisible] = useState(false);
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  backButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary,
+  },
+  tabText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  activeTabText: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  content: {
+    flex: 1,
+  },
+  section: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginHorizontal: 4,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  actionButtonText: {
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
+    flex: 1,
+  },
+  userCard: {
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  userBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  adminBadge: {
+    backgroundColor: colors.primary + '20',
+  },
+  bannedBadge: {
+    backgroundColor: colors.error + '20',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  adminBadgeText: {
+    color: colors.primary,
+  },
+  bannedBadgeText: {
+    color: colors.error,
+  },
+  userActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  userActionButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  unauthorizedContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  unauthorizedText: {
+    fontSize: 18,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 16,
+  },
+});
+
+export default function AdminScreen() {
+  const { events, loading: eventsLoading, refreshEvents, deleteEvent } = useEvents();
+  const { user, isAuthenticated, updateUserRole, banUser } = useAuth();
+  const { users, loading: usersLoading, refreshUsers } = useUsers();
+  const [activeTab, setActiveTab] = useState<'events' | 'users' | 'settings'>('events');
+  const [showSupabaseSheet, setShowSupabaseSheet] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Berechne den unteren Abstand für die Tab-Bar
-  const tabBarHeight = Platform.OS === 'ios' ? 50 + Math.max(insets.bottom - 10, 0) : 60;
+  // Check if user is admin
+  if (!isAuthenticated || !user?.isAdmin) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Icon name="arrow-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Admin-Bereich</Text>
+          </View>
+          <View style={{ width: 36 }} />
+        </View>
+        
+        <View style={styles.unauthorizedContainer}>
+          <Icon name="shield-off" size={64} color={colors.textSecondary} />
+          <Text style={styles.unauthorizedText}>
+            Sie haben keine Berechtigung für den Admin-Bereich.
+            {'\n\n'}
+            Nur Administratoren können auf diese Seite zugreifen.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  const handleDeleteEvent = (eventId: string) => {
+  const onRefresh = async () => {
+    if (activeTab === 'events') {
+      await refreshEvents();
+    } else if (activeTab === 'users') {
+      await refreshUsers();
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    await deleteEvent(eventId);
+  };
+
+  const handlePromoteUser = async (userId: string, currentIsAdmin: boolean) => {
+    const action = currentIsAdmin ? 'zurückstufen' : 'befördern';
     Alert.alert(
-      'Event löschen',
-      'Sind Sie sicher, dass Sie dieses Event als Admin löschen möchten?',
+      'Benutzerrolle ändern',
+      `Möchten Sie diesen Benutzer wirklich ${action}?`,
       [
         { text: 'Abbrechen', style: 'cancel' },
-        { 
-          text: 'Löschen', 
-          style: 'destructive',
-          onPress: () => {
-            console.log('Admin deleting event:', eventId);
-            deleteEvent(eventId);
+        {
+          text: action === 'befördern' ? 'Befördern' : 'Zurückstufen',
+          onPress: async () => {
+            const result = await updateUserRole(userId, !currentIsAdmin);
+            if (result.success) {
+              await refreshUsers();
+            }
           }
         }
       ]
     );
   };
 
-  const handleBanUser = (userId: string, userName: string) => {
+  const handleBanUser = async (userId: string, currentIsBanned: boolean) => {
+    const action = currentIsBanned ? 'entsperren' : 'sperren';
     Alert.alert(
-      'Benutzer sperren',
-      `Möchten Sie den Benutzer "${userName}" sperren?`,
+      'Benutzer sperren/entsperren',
+      `Möchten Sie diesen Benutzer wirklich ${action}?`,
       [
         { text: 'Abbrechen', style: 'cancel' },
-        { 
-          text: 'Sperren', 
-          style: 'destructive',
-          onPress: () => {
-            console.log('Admin banning user:', userId, userName);
-            Alert.alert('Erfolg', `Benutzer "${userName}" wurde gesperrt.`);
+        {
+          text: action === 'sperren' ? 'Sperren' : 'Entsperren',
+          style: action === 'sperren' ? 'destructive' : 'default',
+          onPress: async () => {
+            const result = await banUser(userId, !currentIsBanned);
+            if (result.success) {
+              await refreshUsers();
+            }
           }
         }
       ]
@@ -59,233 +283,220 @@ const AdminScreen = () => {
   };
 
   const handleSupabaseConnected = () => {
-    console.log('Supabase verbunden, prüfe Auth-Status');
-    checkAuthStatus();
+    setShowSupabaseSheet(false);
+    // Refresh data after connection
+    refreshEvents();
+    refreshUsers();
   };
 
-  const renderEventsTab = () => (
-    <ScrollView
-      style={styles.content}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
-      showsVerticalScrollIndicator={false}
-    >
-      {events.map((event) => (
-        <View key={event.id} style={styles.eventContainer}>
-          <EventCard
-            event={event}
-            onPress={() => console.log('Admin viewing event:', event.id)}
-            onLike={() => likeEvent(event.id)}
-            onFavorite={() => toggleFavorite(event)}
-            isFavorite={isFavorite(event.id)}
-            showActions={true}
-            onReport={() => reportEvent(event.id)}
-            onDelete={() => handleDeleteEvent(event.id)}
-          />
-          <View style={styles.adminActions}>
-            <TouchableOpacity
-              style={styles.adminButton}
-              onPress={() => handleBanUser(event.authorId, event.author)}
-            >
-              <Icon name="person-remove" size={16} color={colors.error} />
-              <Text style={styles.adminButtonText}>Benutzer sperren</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.adminButton, styles.deleteButton]}
-              onPress={() => handleDeleteEvent(event.id)}
-            >
-              <Icon name="trash" size={16} color={colors.error} />
-              <Text style={styles.adminButtonText}>Event löschen</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ))}
+  const renderEventsTab = () => {
+    const totalEvents = events.length;
+    const recentEvents = events.filter(event => {
+      const eventDate = new Date(event.createdAt);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return eventDate >= weekAgo;
+    }).length;
 
-      {events.length === 0 && (
-        <View style={styles.emptyState}>
-          <Icon name="calendar-outline" size={64} color={colors.grey} />
-          <Text style={styles.emptyStateTitle}>Keine Events</Text>
-          <Text style={styles.emptyStateText}>
-            Es wurden noch keine Events erstellt.
-          </Text>
-        </View>
-      )}
-    </ScrollView>
-  );
-
-  const renderReportsTab = () => {
-    const reportedEvents = events.filter(e => e.reported);
-    
     return (
       <ScrollView
         style={styles.content}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
-        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={eventsLoading} onRefresh={onRefresh} />
+        }
       >
-        {reportedEvents.map((event) => (
-          <View key={event.id} style={styles.eventContainer}>
-            <EventCard
-              event={event}
-              onPress={() => console.log('Admin viewing reported event:', event.id)}
-              onLike={() => likeEvent(event.id)}
-              onFavorite={() => toggleFavorite(event)}
-              isFavorite={isFavorite(event.id)}
-              showActions={true}
-              onReport={() => reportEvent(event.id)}
-              onDelete={() => handleDeleteEvent(event.id)}
-            />
-            <View style={styles.adminActions}>
-              <TouchableOpacity
-                style={styles.adminButton}
-                onPress={() => handleBanUser(event.authorId, event.author)}
-              >
-                <Icon name="person-remove" size={16} color={colors.error} />
-                <Text style={styles.adminButtonText}>Benutzer sperren</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.adminButton, styles.deleteButton]}
-                onPress={() => handleDeleteEvent(event.id)}
-              >
-                <Icon name="trash" size={16} color={colors.error} />
-                <Text style={styles.adminButtonText}>Event löschen</Text>
-              </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Veranstaltungsstatistiken</Text>
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{totalEvents}</Text>
+              <Text style={styles.statLabel}>Gesamt</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{recentEvents}</Text>
+              <Text style={styles.statLabel}>Diese Woche</Text>
             </View>
           </View>
-        ))}
 
-        {reportedEvents.length === 0 && (
-          <View style={styles.emptyState}>
-            <Icon name="flag-outline" size={64} color={colors.grey} />
-            <Text style={styles.emptyStateTitle}>Keine Meldungen</Text>
-            <Text style={styles.emptyStateText}>
-              Es liegen keine gemeldeten Events vor.
-            </Text>
-          </View>
-        )}
+          <Text style={styles.sectionTitle}>Alle Veranstaltungen</Text>
+          {events.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name="calendar" size={48} color={colors.textSecondary} />
+              <Text style={styles.emptyStateText}>
+                Keine Veranstaltungen gefunden
+              </Text>
+            </View>
+          ) : (
+            events.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onPress={() => router.push(`/event/${event.id}`)}
+                onLike={() => {}}
+                showActions={true}
+                onDelete={() => handleDeleteEvent(event.id)}
+              />
+            ))
+          )}
+        </View>
       </ScrollView>
     );
   };
 
-  const renderSettingsTab = () => (
-    <ScrollView
-      style={styles.content}
-      contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.settingsSection}>
-        <Text style={styles.settingsSectionTitle}>Datenbankverbindung</Text>
-        
-        <View style={styles.settingsCard}>
-          <View style={styles.settingsCardHeader}>
-            <Icon 
-              name={isSupabaseInitialized() ? "cloud-done" : "cloud-offline"} 
-              size={24} 
-              color={isSupabaseInitialized() ? colors.success : colors.grey} 
-            />
-            <View style={styles.settingsCardText}>
-              <Text style={styles.settingsCardTitle}>Supabase</Text>
-              <Text style={styles.settingsCardSubtitle}>
-                {isSupabaseInitialized() 
-                  ? 'Verbunden - Authentifizierung und Datenspeicherung aktiv'
-                  : 'Nicht verbunden - Nur lokale Mock-Daten verfügbar'
-                }
+  const renderUsersTab = () => {
+    const totalUsers = users.length;
+    const adminUsers = users.filter(user => user.is_admin).length;
+    const bannedUsers = users.filter(user => user.is_banned).length;
+
+    return (
+      <ScrollView
+        style={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={usersLoading} onRefresh={onRefresh} />
+        }
+      >
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Benutzerstatistiken</Text>
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{totalUsers}</Text>
+              <Text style={styles.statLabel}>Gesamt</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{adminUsers}</Text>
+              <Text style={styles.statLabel}>Admins</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{bannedUsers}</Text>
+              <Text style={styles.statLabel}>Gesperrt</Text>
+            </View>
+          </View>
+
+          <Text style={styles.sectionTitle}>Benutzerverwaltung</Text>
+          {users.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name="users" size={48} color={colors.textSecondary} />
+              <Text style={styles.emptyStateText}>
+                Keine Benutzer gefunden
               </Text>
             </View>
-          </View>
-          
-          {!isSupabaseInitialized() && (
-            <TouchableOpacity 
-              style={styles.connectButton}
-              onPress={() => setIsSupabaseSheetVisible(true)}
-            >
-              <Icon name="link" size={16} color="white" />
-              <Text style={styles.connectButtonText}>Jetzt verbinden</Text>
-            </TouchableOpacity>
+          ) : (
+            users.map((userProfile) => (
+              <View key={userProfile.id} style={styles.userCard}>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>{userProfile.name}</Text>
+                  <Text style={styles.userEmail}>{userProfile.email}</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                    {userProfile.is_admin && (
+                      <View style={[styles.userBadge, styles.adminBadge]}>
+                        <Text style={[styles.badgeText, styles.adminBadgeText]}>
+                          Admin
+                        </Text>
+                      </View>
+                    )}
+                    {userProfile.is_banned && (
+                      <View style={[styles.userBadge, styles.bannedBadge]}>
+                        <Text style={[styles.badgeText, styles.bannedBadgeText]}>
+                          Gesperrt
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.userActions}>
+                  <TouchableOpacity
+                    style={styles.userActionButton}
+                    onPress={() => handlePromoteUser(userProfile.user_id, userProfile.is_admin)}
+                  >
+                    <Icon 
+                      name={userProfile.is_admin ? "user-minus" : "user-plus"} 
+                      size={16} 
+                      color={colors.primary} 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.userActionButton}
+                    onPress={() => handleBanUser(userProfile.user_id, userProfile.is_banned)}
+                  >
+                    <Icon 
+                      name={userProfile.is_banned ? "unlock" : "lock"} 
+                      size={16} 
+                      color={userProfile.is_banned ? colors.success : colors.error} 
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))
           )}
+        </View>
+      </ScrollView>
+    );
+  };
+
+  const renderSettingsTab = () => {
+    return (
+      <ScrollView style={styles.content}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Systemeinstellungen</Text>
           
-          {isSupabaseInitialized() && (
-            <View style={styles.connectedIndicator}>
-              <Icon name="checkmark-circle" size={16} color={colors.success} />
-              <Text style={styles.connectedText}>Verbunden</Text>
-            </View>
-          )}
-        </View>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setShowSupabaseSheet(true)}
+          >
+            <Icon name="database" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>
+              Supabase-Verbindung {isSupabaseInitialized() ? 'verwalten' : 'einrichten'}
+            </Text>
+            <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
 
-        <View style={styles.infoCard}>
-          <Icon name="information-circle-outline" size={20} color={colors.accent} />
-          <Text style={styles.infoText}>
-            Ohne Supabase-Verbindung funktioniert die App nur mit lokalen Mock-Daten. 
-            Benutzeranmeldung und persistente Datenspeicherung sind nicht verfügbar.
-          </Text>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setShowUserManagement(true)}
+          >
+            <Icon name="users" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>
+              Erweiterte Benutzerverwaltung
+            </Text>
+            <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
-      </View>
-
-      <View style={styles.settingsSection}>
-        <Text style={styles.settingsSectionTitle}>Admin-Funktionen</Text>
-        
-        <View style={styles.featureList}>
-          <View style={styles.featureItem}>
-            <Icon name="shield-checkmark" size={20} color={colors.accent} />
-            <Text style={styles.featureText}>Event-Moderation</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Icon name="person-remove" size={20} color={colors.accent} />
-            <Text style={styles.featureText}>Benutzer-Verwaltung</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Icon name="flag" size={20} color={colors.accent} />
-            <Text style={styles.featureText}>Meldungen bearbeiten</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Icon name="analytics" size={20} color={colors.accent} />
-            <Text style={styles.featureText}>Statistiken einsehen</Text>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
-  );
+      </ScrollView>
+    );
+  };
 
   return (
-    <SafeAreaView style={[commonStyles.container, styles.container]} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Admin Panel</Text>
-          <Text style={styles.headerSubtitle}>Moderation & Verwaltung</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Icon name="arrow-left" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <View>
+          <Text style={styles.headerTitle}>Admin-Bereich</Text>
+          <Text style={styles.headerSubtitle}>
+            Veranstaltungen und Benutzer verwalten
+          </Text>
         </View>
-        <View style={styles.adminBadge}>
-          <Icon name="shield" size={20} color={colors.accent} />
-        </View>
+        <View style={{ width: 36 }} />
       </View>
 
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{events.length}</Text>
-          <Text style={styles.statLabel}>Events</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{events.filter(e => e.reported).length}</Text>
-          <Text style={styles.statLabel}>Gemeldet</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{new Set(events.map(e => e.authorId)).size}</Text>
-          <Text style={styles.statLabel}>Benutzer</Text>
-        </View>
-      </View>
-
+      {/* Tabs */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'events' && styles.activeTab]}
           onPress={() => setActiveTab('events')}
         >
           <Text style={[styles.tabText, activeTab === 'events' && styles.activeTabText]}>
-            Events
+            Veranstaltungen
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'reports' && styles.activeTab]}
-          onPress={() => setActiveTab('reports')}
+          style={[styles.tab, activeTab === 'users' && styles.activeTab]}
+          onPress={() => setActiveTab('users')}
         >
-          <Text style={[styles.tabText, activeTab === 'reports' && styles.activeTabText]}>
-            Meldungen
+          <Text style={[styles.tabText, activeTab === 'users' && styles.activeTabText]}>
+            Benutzer
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -298,243 +509,23 @@ const AdminScreen = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Content */}
       {activeTab === 'events' && renderEventsTab()}
-      {activeTab === 'reports' && renderReportsTab()}
+      {activeTab === 'users' && renderUsersTab()}
       {activeTab === 'settings' && renderSettingsTab()}
 
+      {/* Supabase Connection Sheet */}
       <SupabaseConnectionSheet
-        isVisible={isSupabaseSheetVisible}
-        onClose={() => setIsSupabaseSheetVisible(false)}
+        isVisible={showSupabaseSheet}
+        onClose={() => setShowSupabaseSheet(false)}
         onConnected={handleSupabaseConnected}
+      />
+
+      {/* User Management Sheet */}
+      <UserManagementSheet
+        isVisible={showUserManagement}
+        onClose={() => setShowUserManagement(false)}
       />
     </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grey + '30',
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  headerTitle: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  headerSubtitle: {
-    color: colors.grey,
-    fontSize: 14,
-    marginTop: 2,
-  },
-  adminBadge: {
-    backgroundColor: colors.primary,
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grey + '30',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statNumber: {
-    color: colors.accent,
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  statLabel: {
-    color: colors.grey,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grey + '30',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: colors.accent,
-  },
-  tabText: {
-    color: colors.grey,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: colors.accent,
-    fontWeight: '600',
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  eventContainer: {
-    marginBottom: 8,
-  },
-  adminActions: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 12,
-  },
-  adminButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundAlt,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-  },
-  deleteButton: {
-    backgroundColor: colors.error + '20',
-  },
-  adminButtonText: {
-    color: colors.error,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 64,
-  },
-  emptyStateTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateText: {
-    color: colors.grey,
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  settingsSection: {
-    padding: 16,
-    marginBottom: 24,
-  },
-  settingsSectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  settingsCard: {
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  settingsCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  settingsCardText: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  settingsCardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 2,
-  },
-  settingsCardSubtitle: {
-    fontSize: 12,
-    color: colors.grey,
-    lineHeight: 16,
-  },
-  connectButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  connectButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  connectedIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  connectedText: {
-    color: colors.success,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.accent + '10',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.accent + '30',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.text,
-    lineHeight: 16,
-    marginLeft: 8,
-  },
-  featureList: {
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: 12,
-    padding: 16,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  featureText: {
-    fontSize: 14,
-    color: colors.text,
-    marginLeft: 12,
-    fontWeight: '500',
-  },
-});
-
-export default AdminScreen;
+}

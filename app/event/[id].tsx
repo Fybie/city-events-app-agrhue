@@ -1,433 +1,164 @@
 
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { commonStyles, colors } from '../../styles/commonStyles';
-import { useEvents } from '../../hooks/useEvents';
-import { currentUser } from '../../data/mockData';
 import Icon from '../../components/Icon';
-
-export default function EventDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { 
-    events, 
-    likeEvent, 
-    addComment, 
-    reportEvent, 
-    isFavorite, 
-    toggleFavorite,
-    hasNotificationPermission 
-  } = useEvents();
-  const [commentText, setCommentText] = useState('');
-  
-  const event = events.find(e => e.id === id);
-
-  if (!event) {
-    return (
-      <SafeAreaView style={commonStyles.wrapper}>
-        <View style={styles.errorContainer}>
-          <Icon name="alert-circle-outline" size={64} color={colors.grey} />
-          <Text style={styles.errorText}>Event nicht gefunden</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>Zurück</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('de-DE', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
-  const formatCommentDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const handleAddComment = () => {
-    if (!commentText.trim()) {
-      Alert.alert('Fehler', 'Bitte geben Sie einen Kommentar ein.');
-      return;
-    }
-
-    console.log('Adding comment to event:', event.id);
-    addComment(event.id, commentText.trim());
-    setCommentText('');
-  };
-
-  const handleReport = () => {
-    Alert.alert(
-      'Event melden',
-      'Möchten Sie dieses Event wirklich melden?',
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        { 
-          text: 'Melden', 
-          style: 'destructive',
-          onPress: () => {
-            console.log('Reporting event:', event.id);
-            reportEvent(event.id);
-            Alert.alert('Gemeldet', 'Das Event wurde gemeldet und wird überprüft.');
-          }
-        }
-      ]
-    );
-  };
-
-  return (
-    <SafeAreaView style={commonStyles.wrapper}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Icon name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Event Details</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.headerActionButton}
-            onPress={() => toggleFavorite(event)}
-          >
-            <Icon 
-              name={isFavorite(event.id) ? "star" : "star-outline"} 
-              size={24} 
-              color={isFavorite(event.id) ? colors.primary : colors.text} 
-            />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.headerActionButton}
-            onPress={handleReport}
-          >
-            <Icon name="flag-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.eventContainer}>
-          <View style={styles.dateTimeContainer}>
-            <View style={styles.dateContainer}>
-              <Text style={styles.date}>{formatDate(event.date)}</Text>
-              <Text style={styles.time}>{event.time} Uhr</Text>
-            </View>
-            {event.isReported && (
-              <View style={styles.reportedBadge}>
-                <Text style={styles.reportedText}>Gemeldet</Text>
-              </View>
-            )}
-          </View>
-
-          <Text style={styles.title}>{event.title}</Text>
-          <Text style={styles.description}>{event.description}</Text>
-
-          <View style={styles.locationContainer}>
-            <Icon name="location" size={20} color={colors.accent} />
-            <Text style={styles.location}>{event.location}, {event.city}</Text>
-          </View>
-
-          <View style={styles.authorContainer}>
-            <Icon name="person" size={16} color={colors.grey} />
-            <Text style={styles.author}>Erstellt von {event.author}</Text>
-          </View>
-
-          <View style={styles.actionsContainer}>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => likeEvent(event.id)}
-            >
-              <Icon name="heart-outline" size={24} color={colors.accent} />
-              <Text style={styles.actionText}>{event.likes} Likes</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.actionButton}>
-              <Icon name="chatbubble-outline" size={24} color={colors.accent} />
-              <Text style={styles.actionText}>{event.comments.length} Kommentare</Text>
-            </View>
-
-            <TouchableOpacity 
-              style={[
-                styles.actionButton, 
-                isFavorite(event.id) && styles.favoriteActionButton
-              ]}
-              onPress={() => toggleFavorite(event)}
-            >
-              <Icon 
-                name={isFavorite(event.id) ? "star" : "star-outline"} 
-                size={24} 
-                color={isFavorite(event.id) ? colors.primary : colors.accent} 
-              />
-              <Text style={[
-                styles.actionText,
-                isFavorite(event.id) && styles.favoriteActionText
-              ]}>
-                {isFavorite(event.id) ? 'Favorit' : 'Favorisieren'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {isFavorite(event.id) && (
-            <View style={styles.favoriteNotification}>
-              <Icon 
-                name={hasNotificationPermission ? "notifications" : "notifications-off"} 
-                size={16} 
-                color={hasNotificationPermission ? colors.primary : colors.error} 
-              />
-              <Text style={[
-                styles.favoriteNotificationText,
-                !hasNotificationPermission && styles.favoriteNotificationError
-              ]}>
-                {hasNotificationPermission 
-                  ? 'Du erhältst eine Benachrichtigung vor dem Event'
-                  : 'Push-Benachrichtigungen sind deaktiviert'
-                }
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.commentsSection}>
-          <Text style={styles.commentsTitle}>Kommentare</Text>
-          
-          <View style={styles.addCommentContainer}>
-            <TextInput
-              style={styles.commentInput}
-              value={commentText}
-              onChangeText={setCommentText}
-              placeholder="Kommentar schreiben..."
-              placeholderTextColor={colors.grey}
-              multiline
-            />
-            <TouchableOpacity 
-              style={styles.sendButton}
-              onPress={handleAddComment}
-            >
-              <Icon name="send" size={20} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          {event.comments.length === 0 ? (
-            <View style={styles.noCommentsContainer}>
-              <Text style={styles.noCommentsText}>Noch keine Kommentare</Text>
-              <Text style={styles.noCommentsSubtext}>Sei der erste, der kommentiert!</Text>
-            </View>
-          ) : (
-            event.comments.map((comment) => (
-              <View key={comment.id} style={styles.commentItem}>
-                <View style={styles.commentHeader}>
-                  <Text style={styles.commentAuthor}>{comment.author}</Text>
-                  <Text style={styles.commentDate}>
-                    {formatCommentDate(comment.createdAt)}
-                  </Text>
-                </View>
-                <Text style={styles.commentText}>{comment.text}</Text>
-              </View>
-            ))
-          )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+import { useEvents } from '../../hooks/useEvents';
+import { useAuth } from '../../hooks/useAuth';
+import { commonStyles, colors } from '../../styles/commonStyles';
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.grey,
+    borderBottomColor: colors.border,
   },
-  headerTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '600',
+  backButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
   },
   headerActions: {
     flexDirection: 'row',
+    gap: 8,
   },
-  headerActionButton: {
-    marginLeft: 16,
-  },
-  content: {
-    flex: 1,
-  },
-  eventContainer: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grey,
-  },
-  dateTimeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  dateContainer: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  headerButton: {
+    padding: 8,
     borderRadius: 8,
+    backgroundColor: colors.surface,
   },
-  date: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
+  eventImage: {
+    width: '100%',
+    height: 200,
+    backgroundColor: colors.surface,
   },
-  time: {
-    color: colors.text,
-    fontSize: 14,
-    opacity: 0.8,
+  eventContent: {
+    padding: 20,
   },
-  reportedBadge: {
-    backgroundColor: '#ff4444',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  reportedText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  title: {
-    color: colors.text,
+  eventTitle: {
     fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  description: {
+    fontWeight: 'bold',
     color: colors.text,
-    fontSize: 16,
-    lineHeight: 24,
+    marginBottom: 8,
+  },
+  eventMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  locationContainer: {
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginRight: 16,
   },
-  location: {
-    color: colors.text,
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  authorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  author: {
-    color: colors.grey,
+  metaText: {
     fontSize: 14,
+    color: colors.textSecondary,
     marginLeft: 4,
   },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 16,
+  eventDescription: {
+    fontSize: 16,
+    color: colors.text,
+    lineHeight: 24,
+    marginBottom: 20,
   },
-  actionButton: {
+  eventStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundAlt,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 20,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  statText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginLeft: 4,
+  },
+  authorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  authorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  authorAvatarText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  authorName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  authorMeta: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  commentsSection: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  commentInput: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 12,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  commentButton: {
+    backgroundColor: colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
-  },
-  actionText: {
-    color: colors.text,
-    fontSize: 14,
-    marginLeft: 8,
-    fontWeight: '600',
-  },
-  favoriteActionButton: {
-    backgroundColor: colors.primary + '20',
-  },
-  favoriteActionText: {
-    color: colors.primary,
-  },
-  favoriteNotification: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary + '20',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  favoriteNotificationText: {
-    color: colors.primary,
-    fontSize: 12,
-    marginLeft: 8,
-    flex: 1,
-  },
-  favoriteNotificationError: {
-    color: colors.error,
-  },
-  commentsSection: {
-    padding: 20,
-  },
-  commentsTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  addCommentContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignSelf: 'flex-end',
     marginBottom: 20,
   },
-  commentInput: {
-    flex: 1,
-    backgroundColor: colors.backgroundAlt,
-    borderColor: colors.grey,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    color: colors.text,
-    fontSize: 16,
-    maxHeight: 100,
-    marginRight: 12,
-  },
-  sendButton: {
-    backgroundColor: colors.primary,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noCommentsContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  noCommentsText: {
-    color: colors.text,
-    fontSize: 16,
+  commentButtonText: {
+    color: 'white',
+    fontSize: 14,
     fontWeight: '600',
   },
-  noCommentsSubtext: {
-    color: colors.grey,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  commentItem: {
-    backgroundColor: colors.backgroundAlt,
+  commentCard: {
+    backgroundColor: colors.surface,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 12,
   },
   commentHeader: {
@@ -437,42 +168,323 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   commentAuthor: {
-    color: colors.text,
     fontSize: 14,
     fontWeight: '600',
+    color: colors.text,
   },
   commentDate: {
-    color: colors.grey,
     fontSize: 12,
+    color: colors.textSecondary,
   },
   commentText: {
-    color: colors.text,
     fontSize: 14,
+    color: colors.text,
     lineHeight: 20,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  emptyComments: {
     alignItems: 'center',
-    paddingHorizontal: 40,
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
-  errorText: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 16,
+  emptyCommentsText: {
+    fontSize: 14,
+    color: colors.textSecondary,
     textAlign: 'center',
+    marginTop: 8,
   },
-  backButton: {
+  loginPrompt: {
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  loginPromptText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  loginButton: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
-  backButtonText: {
-    color: colors.text,
-    fontSize: 16,
+  loginButtonText: {
+    color: 'white',
+    fontSize: 14,
     fontWeight: '600',
   },
 });
+
+export default function EventDetailScreen() {
+  const { events, addComment, likeEvent, deleteEvent } = useEvents();
+  const { user, isAuthenticated } = useAuth();
+  const { id } = useLocalSearchParams();
+  const [comment, setComment] = useState('');
+
+  const event = events.find(e => e.id === id);
+
+  if (!event) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Icon name="arrow-left" size={20} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="calendar-x" size={64} color={colors.textSecondary} />
+          <Text style={{ fontSize: 16, color: colors.textSecondary, marginTop: 16 }}>
+            Veranstaltung nicht gefunden
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('de-DE', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatCommentDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleAddComment = async () => {
+    if (!isAuthenticated || !user) {
+      Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Kommentare zu schreiben.');
+      return;
+    }
+
+    if (!comment.trim()) {
+      Alert.alert('Fehler', 'Bitte geben Sie einen Kommentar ein.');
+      return;
+    }
+
+    const result = await addComment(event.id, comment.trim(), user.name || 'Unbekannt', user.id);
+    if (result.success) {
+      setComment('');
+    }
+  };
+
+  const handleLike = async () => {
+    if (!isAuthenticated || !user) {
+      Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Veranstaltungen zu liken.');
+      return;
+    }
+
+    await likeEvent(event.id, user.id);
+  };
+
+  const handleDelete = async () => {
+    Alert.alert(
+      'Veranstaltung löschen',
+      'Sind Sie sicher, dass Sie diese Veranstaltung löschen möchten?',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Löschen',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await deleteEvent(event.id);
+            if (result.success) {
+              router.back();
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleReport = () => {
+    if (!isAuthenticated || !user) {
+      Alert.alert('Anmeldung erforderlich', 'Sie müssen angemeldet sein, um Inhalte zu melden.');
+      return;
+    }
+
+    Alert.alert(
+      'Veranstaltung melden',
+      'Möchten Sie diese Veranstaltung wegen unangemessener Inhalte melden?',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Melden',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Gemeldet', 'Die Veranstaltung wurde zur Überprüfung gemeldet.');
+          }
+        }
+      ]
+    );
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const canEdit = isAuthenticated && user && (user.id === event.authorId || user.isAdmin);
+  const canDelete = isAuthenticated && user && (user.id === event.authorId || user.isAdmin);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Icon name="arrow-left" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleLike}>
+            <Icon name="heart" size={20} color={colors.primary} />
+          </TouchableOpacity>
+          {canDelete && (
+            <TouchableOpacity style={styles.headerButton} onPress={handleDelete}>
+              <Icon name="trash-2" size={20} color={colors.error} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.headerButton} onPress={handleReport}>
+            <Icon name="flag" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Event Image */}
+        {event.image && (
+          <Image source={{ uri: event.image }} style={styles.eventImage} />
+        )}
+
+        <View style={styles.eventContent}>
+          {/* Event Title */}
+          <Text style={styles.eventTitle}>{event.title}</Text>
+
+          {/* Event Meta */}
+          <View style={styles.eventMeta}>
+            <View style={styles.metaItem}>
+              <Icon name="calendar" size={16} color={colors.textSecondary} />
+              <Text style={styles.metaText}>{formatDate(event.date)}</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Icon name="clock" size={16} color={colors.textSecondary} />
+              <Text style={styles.metaText}>{event.time}</Text>
+            </View>
+          </View>
+
+          <View style={styles.eventMeta}>
+            <View style={styles.metaItem}>
+              <Icon name="map-pin" size={16} color={colors.textSecondary} />
+              <Text style={styles.metaText}>{event.location}, {event.city}</Text>
+            </View>
+          </View>
+
+          {/* Event Description */}
+          <Text style={styles.eventDescription}>{event.description}</Text>
+
+          {/* Event Stats */}
+          <View style={styles.eventStats}>
+            <View style={styles.statItem}>
+              <Icon name="heart" size={16} color={colors.textSecondary} />
+              <Text style={styles.statText}>{event.likes} Likes</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Icon name="message-circle" size={16} color={colors.textSecondary} />
+              <Text style={styles.statText}>{event.comments.length} Kommentare</Text>
+            </View>
+          </View>
+
+          {/* Author Info */}
+          <View style={styles.authorInfo}>
+            <View style={styles.authorAvatar}>
+              <Text style={styles.authorAvatarText}>
+                {getInitials(event.author)}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.authorName}>{event.author}</Text>
+              <Text style={styles.authorMeta}>
+                Erstellt am {formatCommentDate(event.createdAt)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Comments Section */}
+          <View style={styles.commentsSection}>
+            <Text style={styles.sectionTitle}>Kommentare ({event.comments.length})</Text>
+
+            {/* Comment Input */}
+            {isAuthenticated && user ? (
+              <>
+                <TextInput
+                  style={styles.commentInput}
+                  placeholder="Schreiben Sie einen Kommentar..."
+                  placeholderTextColor={colors.textSecondary}
+                  value={comment}
+                  onChangeText={setComment}
+                  multiline
+                />
+                <TouchableOpacity
+                  style={styles.commentButton}
+                  onPress={handleAddComment}
+                  disabled={!comment.trim()}
+                >
+                  <Text style={styles.commentButtonText}>Kommentieren</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.loginPrompt}>
+                <Text style={styles.loginPromptText}>
+                  Melden Sie sich an, um Kommentare zu schreiben
+                </Text>
+                <TouchableOpacity
+                  style={styles.loginButton}
+                  onPress={() => router.push('/(tabs)/')}
+                >
+                  <Text style={styles.loginButtonText}>Anmelden</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Comments List */}
+            {event.comments.length === 0 ? (
+              <View style={styles.emptyComments}>
+                <Icon name="message-circle" size={32} color={colors.textSecondary} />
+                <Text style={styles.emptyCommentsText}>
+                  Noch keine Kommentare vorhanden.{'\n'}
+                  Seien Sie der Erste, der kommentiert!
+                </Text>
+              </View>
+            ) : (
+              event.comments.map((comment) => (
+                <View key={comment.id} style={styles.commentCard}>
+                  <View style={styles.commentHeader}>
+                    <Text style={styles.commentAuthor}>{comment.author}</Text>
+                    <Text style={styles.commentDate}>
+                      {formatCommentDate(comment.createdAt)}
+                    </Text>
+                  </View>
+                  <Text style={styles.commentText}>{comment.text}</Text>
+                </View>
+              ))
+            )}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
