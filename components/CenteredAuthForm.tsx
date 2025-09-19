@@ -107,18 +107,18 @@ const CenteredAuthForm: React.FC<CenteredAuthFormProps> = ({ onAuthSuccess }) =>
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.keyboardAvoidingView}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        bounces={false}
+    <View style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
       >
-        <View style={styles.container}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+        >
           <View style={styles.formContainer}>
             {/* Header */}
             <View style={styles.header}>
@@ -244,40 +244,40 @@ const CenteredAuthForm: React.FC<CenteredAuthFormProps> = ({ onAuthSuccess }) =>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  keyboardAvoidingView: {
+  container: {
     flex: 1,
     backgroundColor: colors.background,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   scrollContainer: {
     flexGrow: 1,
-    minHeight: screenHeight,
-  },
-  container: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 40,
+    paddingVertical: 20,
+    minHeight: screenHeight - 100, // Ensure minimum height but allow scrolling
   },
   formContainer: {
     width: '100%',
     maxWidth: 400,
     backgroundColor: colors.surface,
     borderRadius: 20,
-    padding: 32,
+    padding: 24,
     boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.3)',
     elevation: 8,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   logoContainer: {
     width: 80,
@@ -289,14 +289,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -304,20 +304,20 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     fontSize: 16,
     color: colors.text,
     backgroundColor: colors.backgroundAlt,
@@ -333,17 +333,17 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     fontSize: 16,
     color: colors.text,
   },
   eyeButton: {
-    padding: 14,
+    padding: 12,
   },
   submitButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 16,

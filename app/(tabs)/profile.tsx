@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
   },
@@ -34,6 +34,10 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     backgroundColor: colors.surface,
+  },
+  content: {
+    flex: 1,
+    paddingBottom: 70, // Add padding to account for tab bar
   },
   profileSection: {
     backgroundColor: colors.surface,
@@ -196,11 +200,11 @@ export default function ProfileScreen() {
           style={styles.headerButton} 
           onPress={() => setShowSettingsSheet(true)}
         >
-          <Icon name="settings" size={20} color={colors.text} />
+          <Icon name="settings" size={18} color={colors.text} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>

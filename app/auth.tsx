@@ -30,9 +30,7 @@ export default function AuthScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.container}>
-        <CenteredAuthForm onAuthSuccess={handleAuthSuccess} />
-      </View>
+      <CenteredAuthForm onAuthSuccess={handleAuthSuccess} />
     </SafeAreaView>
   );
 }

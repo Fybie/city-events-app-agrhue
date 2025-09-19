@@ -29,19 +29,19 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
   },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   headerButton: {
     padding: 8,
@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingBottom: 70, // Add padding to account for tab bar
   },
   filterContainer: {
     paddingHorizontal: 20,
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 90, // Position above tab bar
     right: 20,
     width: 56,
     height: 56,
@@ -213,14 +214,14 @@ export default function EventsScreen() {
               style={styles.headerButton} 
               onPress={() => router.push('/(tabs)/profile')}
             >
-              <Icon name="user" size={20} color={colors.primary} />
+              <Icon name="user" size={18} color={colors.primary} />
             </TouchableOpacity>
             {user?.isAdmin && (
               <TouchableOpacity 
                 style={styles.headerButton} 
                 onPress={() => router.push('/(tabs)/admin')}
               >
-                <Icon name="settings" size={20} color={colors.primary} />
+                <Icon name="settings" size={18} color={colors.primary} />
               </TouchableOpacity>
             )}
           </View>

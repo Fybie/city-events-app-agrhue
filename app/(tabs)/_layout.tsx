@@ -29,14 +29,21 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
+          paddingTop: 6,
+          paddingBottom: 6,
+          height: 56,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '500',
-          marginTop: 4,
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 2,
         },
         headerShown: false,
       }}
@@ -44,7 +51,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Veranstaltungen',
+          title: 'Events',
           tabBarIcon: ({ color, size }) => (
             <Icon name="calendar" size={size} color={color} />
           ),
@@ -53,7 +60,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="past-events"
         options={{
-          title: 'Vergangene Events',
+          title: 'Vergangen',
           tabBarIcon: ({ color, size }) => (
             <Icon name="clock" size={size} color={color} />
           ),
