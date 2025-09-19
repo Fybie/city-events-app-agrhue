@@ -5,9 +5,11 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router';
 import Icon from '../../components/Icon';
 import ProfileSettingsSheet from '../../components/ProfileSettingsSheet';
+import AppStatusCard from '../../components/AppStatusCard';
 import EventCard from '../../components/EventCard';
 import { useEvents } from '../../hooks/useEvents';
 import { useAuth } from '../../hooks/useAuth';
+import { useUsers } from '../../hooks/useUsers';
 import { commonStyles, colors } from '../../styles/commonStyles';
 
 const styles = StyleSheet.create({
@@ -26,13 +28,13 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: colors.text,
   },
   headerButton: {
-    padding: 8,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 10,
     backgroundColor: colors.surface,
   },
   content: {
@@ -40,125 +42,164 @@ const styles = StyleSheet.create({
     paddingBottom: 70, // Add padding to account for tab bar
   },
   profileSection: {
-    backgroundColor: colors.surface,
-    margin: 20,
-    borderRadius: 16,
     padding: 20,
   },
-  profileHeader: {
-    alignItems: 'center',
+  profileCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginRight: 16,
   },
   avatarText: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: colors.primary,
   },
-  userName: {
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: colors.text,
     marginBottom: 4,
   },
-  userEmail: {
+  profileEmail: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  userBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+  profileCity: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  roleBadge: {
     backgroundColor: colors.primary + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 8,
   },
-  userBadgeText: {
+  roleBadgeText: {
     fontSize: 12,
     fontWeight: '600',
     color: colors.primary,
   },
-  profileStats: {
+  actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 4,
+    gap: 12,
+    marginTop: 16,
   },
   actionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: 16,
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundAlt,
+    paddingVertical: 12,
     borderRadius: 12,
-    marginHorizontal: 20,
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  primaryActionButton: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   actionButtonText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '500',
     color: colors.text,
-    marginLeft: 12,
-    flex: 1,
+    marginLeft: 8,
+  },
+  primaryActionButtonText: {
+    color: 'white',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: colors.text,
-    marginHorizontal: 20,
-    marginTop: 20,
     marginBottom: 16,
+    paddingHorizontal: 20,
   },
   eventsContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
+    paddingHorizontal: 20,
   },
   emptyStateText: {
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 12,
+    lineHeight: 24,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  quickActionCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickActionIcon: {
+    marginBottom: 8,
+  },
+  quickActionText: {
+    fontSize: 12,
+    color: colors.text,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
 
 export default function ProfileScreen() {
   const { events, deleteEvent } = useEvents();
   const { user, signOut } = useAuth();
-  const [showSettingsSheet, setShowSettingsSheet] = useState(false);
+  const { users } = useUsers();
+  const [showSettings, setShowSettings] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // If user is not authenticated, redirect to auth screen
   if (!user) {
     router.replace('/auth');
     return null;
   }
 
   const userEvents = events.filter(event => event.authorId === user.id);
-  const totalLikes = userEvents.reduce((sum, event) => sum + event.likes, 0);
+  const upcomingUserEvents = userEvents.filter(event => {
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return eventDate >= today;
+  });
 
   const handleDeleteEvent = async (eventId: string) => {
     await deleteEvent(eventId);
@@ -189,97 +230,115 @@ export default function ProfileScreen() {
       .map(word => word.charAt(0))
       .join('')
       .toUpperCase()
-      .slice(0, 2);
+      .substring(0, 2);
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profil</Text>
+        <Text style={styles.headerTitle}>Mein Profil</Text>
         <TouchableOpacity 
           style={styles.headerButton} 
-          onPress={() => setShowSettingsSheet(true)}
+          onPress={() => setShowSettings(true)}
         >
-          <Icon name="settings" size={18} color={colors.text} />
+          <Icon name="settings" size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
+      {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Section */}
         <View style={styles.profileSection}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {getInitials(user.name || 'U')}
-              </Text>
-            </View>
-            <Text style={styles.userName}>{user.name}</Text>
-            <Text style={styles.userEmail}>{user.email}</Text>
-            {user.isAdmin && (
-              <View style={styles.userBadge}>
-                <Text style={styles.userBadgeText}>Administrator</Text>
+          {/* Profile Card */}
+          <View style={styles.profileCard}>
+            <View style={styles.profileHeader}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {getInitials(user.name || 'User')}
+                </Text>
               </View>
-            )}
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>{user.name}</Text>
+                <Text style={styles.profileEmail}>{user.email}</Text>
+                <Text style={styles.profileCity}>📍 {user.city || 'Keine Stadt angegeben'}</Text>
+                {user.isAdmin && (
+                  <View style={styles.roleBadge}>
+                    <Text style={styles.roleBadgeText}>Administrator</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.primaryActionButton]}
+                onPress={() => setShowSettings(true)}
+              >
+                <Icon name="edit" size={16} color="white" />
+                <Text style={[styles.actionButtonText, styles.primaryActionButtonText]}>
+                  Bearbeiten
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} onPress={handleSignOut}>
+                <Icon name="log-out" size={16} color={colors.error} />
+                <Text style={[styles.actionButtonText, { color: colors.error }]}>
+                  Abmelden
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={styles.profileStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{userEvents.length}</Text>
-              <Text style={styles.statLabel}>Veranstaltungen</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{totalLikes}</Text>
-              <Text style={styles.statLabel}>Likes erhalten</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{user.city || 'Keine'}</Text>
-              <Text style={styles.statLabel}>Stadt</Text>
-            </View>
-          </View>
+          {/* App Status Card */}
+          <AppStatusCard
+            eventsCount={events.length}
+            usersCount={users.length}
+            isAdmin={user.isAdmin || false}
+            onPress={() => router.push('/impressum')}
+          />
         </View>
 
         {/* Quick Actions */}
-        {user.isAdmin && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push('/(tabs)/admin')}
+        <View style={styles.quickActions}>
+          <TouchableOpacity 
+            style={styles.quickActionCard}
+            onPress={() => router.push('/(tabs)/index')}
           >
-            <Icon name="shield" size={20} color={colors.primary} />
-            <Text style={styles.actionButtonText}>Admin-Bereich</Text>
-            <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+            <Icon name="plus" size={24} color={colors.primary} style={styles.quickActionIcon} />
+            <Text style={styles.quickActionText}>Neues Event erstellen</Text>
           </TouchableOpacity>
-        )}
+          <TouchableOpacity 
+            style={styles.quickActionCard}
+            onPress={() => router.push('/(tabs)/past-events')}
+          >
+            <Icon name="clock" size={24} color={colors.primary} style={styles.quickActionIcon} />
+            <Text style={styles.quickActionText}>Vergangene Events</Text>
+          </TouchableOpacity>
+          {user.isAdmin && (
+            <TouchableOpacity 
+              style={styles.quickActionCard}
+              onPress={() => router.push('/(tabs)/admin')}
+            >
+              <Icon name="shield" size={24} color={colors.primary} style={styles.quickActionIcon} />
+              <Text style={styles.quickActionText}>Admin-Bereich</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => setShowSettingsSheet(true)}
-        >
-          <Icon name="user" size={20} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Profil bearbeiten</Text>
-          <Icon name="chevron-right" size={16} color={colors.textSecondary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleSignOut}
-        >
-          <Icon name="log-out" size={20} color={colors.error} />
-          <Text style={[styles.actionButtonText, { color: colors.error }]}>Abmelden</Text>
-          <Icon name="chevron-right" size={16} color={colors.textSecondary} />
-        </TouchableOpacity>
-
-        {/* User's Events */}
-        <Text style={styles.sectionTitle}>Meine Veranstaltungen</Text>
+        {/* My Events */}
+        <Text style={styles.sectionTitle}>Meine Veranstaltungen ({userEvents.length})</Text>
+        
         <View style={styles.eventsContainer}>
-          {userEvents.length === 0 ? (
+          {upcomingUserEvents.length === 0 ? (
             <View style={styles.emptyState}>
               <Icon name="calendar" size={48} color={colors.textSecondary} />
               <Text style={styles.emptyStateText}>
-                Sie haben noch keine Veranstaltungen erstellt.
+                Sie haben noch keine kommenden Veranstaltungen erstellt.
+                {'\n\n'}
+                Tippen Sie auf das + Symbol, um Ihre erste Veranstaltung zu erstellen!
               </Text>
             </View>
           ) : (
-            userEvents.map((event) => (
+            upcomingUserEvents.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}
@@ -293,9 +352,10 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
+      {/* Profile Settings Sheet */}
       <ProfileSettingsSheet
-        isVisible={showSettingsSheet}
-        onClose={() => setShowSettingsSheet(false)}
+        isVisible={showSettings}
+        onClose={() => setShowSettings(false)}
       />
     </SafeAreaView>
   );

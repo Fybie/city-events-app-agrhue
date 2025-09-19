@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -28,6 +28,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerLeft: {
+    flex: 1,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -39,8 +42,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   backButton: {
-    padding: 8,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 10,
     backgroundColor: colors.surface,
   },
   tabContainer: {
@@ -55,12 +58,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeTab: {
-    borderBottomWidth: 2,
+    borderBottomWidth: 3,
     borderBottomColor: colors.primary,
   },
   tabText: {
     fontSize: 16,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   activeTabText: {
     color: colors.primary,
@@ -73,7 +77,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: colors.text,
     marginBottom: 16,
@@ -81,7 +85,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   statCard: {
     flex: 1,
@@ -90,6 +94,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginHorizontal: 4,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   statNumber: {
     fontSize: 24,
@@ -109,12 +115,15 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   actionButtonText: {
     fontSize: 16,
     color: colors.text,
     marginLeft: 12,
     flex: 1,
+    fontWeight: '500',
   },
   userCard: {
     backgroundColor: colors.surface,
@@ -124,6 +133,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   userInfo: {
     flex: 1,
@@ -179,6 +190,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 12,
+    lineHeight: 24,
   },
   unauthorizedContainer: {
     flex: 1,
@@ -191,6 +203,20 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 16,
+    lineHeight: 26,
+  },
+  connectionStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  connectionStatusText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: colors.text,
   },
 });
 
@@ -203,6 +229,14 @@ export default function AdminScreen() {
   const [showUserManagement, setShowUserManagement] = useState(false);
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    // Refresh data when component mounts
+    if (user?.isAdmin) {
+      refreshEvents();
+      refreshUsers();
+    }
+  }, [user?.isAdmin]);
+
   // Check if user is admin
   if (!isAuthenticated || !user?.isAdmin) {
     return (
@@ -211,18 +245,19 @@ export default function AdminScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Icon name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
-          <View>
+          <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>Admin-Bereich</Text>
+            <Text style={styles.headerSubtitle}>Zugriff verweigert</Text>
           </View>
           <View style={{ width: 36 }} />
         </View>
         
         <View style={styles.unauthorizedContainer}>
-          <Icon name="shield-off" size={64} color={colors.textSecondary} />
+          <Icon name="shield-off" size={80} color={colors.textSecondary} />
           <Text style={styles.unauthorizedText}>
             Sie haben keine Berechtigung für den Admin-Bereich.
             {'\n\n'}
-            Nur Administratoren können auf diese Seite zugreifen.
+            Nur Administratoren können auf diese Seite zugreifen. Wenden Sie sich an einen Administrator, um Ihre Berechtigung zu erhalten.
           </Text>
         </View>
       </SafeAreaView>
@@ -298,6 +333,13 @@ export default function AdminScreen() {
       return eventDate >= weekAgo;
     }).length;
 
+    const upcomingEvents = events.filter(event => {
+      const eventDate = new Date(event.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return eventDate >= today;
+    }).length;
+
     return (
       <ScrollView
         style={styles.content}
@@ -313,17 +355,23 @@ export default function AdminScreen() {
               <Text style={styles.statLabel}>Gesamt</Text>
             </View>
             <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{upcomingEvents}</Text>
+              <Text style={styles.statLabel}>Kommend</Text>
+            </View>
+            <View style={styles.statCard}>
               <Text style={styles.statNumber}>{recentEvents}</Text>
               <Text style={styles.statLabel}>Diese Woche</Text>
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>Alle Veranstaltungen</Text>
+          <Text style={styles.sectionTitle}>Alle Veranstaltungen verwalten</Text>
           {events.length === 0 ? (
             <View style={styles.emptyState}>
               <Icon name="calendar" size={48} color={colors.textSecondary} />
               <Text style={styles.emptyStateText}>
-                Keine Veranstaltungen gefunden
+                Noch keine Veranstaltungen vorhanden.
+                {'\n\n'}
+                Sobald Benutzer Veranstaltungen erstellen, können Sie diese hier verwalten.
               </Text>
             </View>
           ) : (
@@ -377,11 +425,13 @@ export default function AdminScreen() {
             <View style={styles.emptyState}>
               <Icon name="users" size={48} color={colors.textSecondary} />
               <Text style={styles.emptyStateText}>
-                Keine Benutzer gefunden
+                Noch keine Benutzer registriert.
+                {'\n\n'}
+                Sobald sich Benutzer registrieren, können Sie diese hier verwalten.
               </Text>
             </View>
           ) : (
-            users.map((userProfile) => (
+            users.slice(0, 10).map((userProfile) => (
               <View key={userProfile.id} style={styles.userCard}>
                 <View style={styles.userInfo}>
                   <Text style={styles.userName}>{userProfile.name}</Text>
@@ -428,6 +478,19 @@ export default function AdminScreen() {
               </View>
             ))
           )}
+          
+          {users.length > 10 && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => setShowUserManagement(true)}
+            >
+              <Icon name="users" size={20} color={colors.primary} />
+              <Text style={styles.actionButtonText}>
+                Alle {users.length} Benutzer anzeigen
+              </Text>
+              <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     );
@@ -438,6 +501,18 @@ export default function AdminScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Systemeinstellungen</Text>
+          
+          {/* Connection Status */}
+          <View style={styles.connectionStatus}>
+            <Icon 
+              name={isSupabaseInitialized() ? "check-circle" : "alert-circle"} 
+              size={20} 
+              color={isSupabaseInitialized() ? colors.success : colors.warning} 
+            />
+            <Text style={styles.connectionStatusText}>
+              Supabase: {isSupabaseInitialized() ? 'Verbunden' : 'Nicht verbunden'}
+            </Text>
+          </View>
           
           <TouchableOpacity
             style={styles.actionButton}
@@ -460,6 +535,23 @@ export default function AdminScreen() {
             </Text>
             <Icon name="chevron-right" size={16} color={colors.textSecondary} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              Alert.alert(
+                'System-Information',
+                `Veranstaltungen: ${events.length}\nBenutzer: ${users.length}\nAdmins: ${users.filter(u => u.is_admin).length}\n\nVersion: 1.0.0\nSupabase: ${isSupabaseInitialized() ? 'Aktiv' : 'Inaktiv'}`,
+                [{ text: 'OK' }]
+              );
+            }}
+          >
+            <Icon name="info" size={20} color={colors.primary} />
+            <Text style={styles.actionButtonText}>
+              System-Information
+            </Text>
+            <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     );
@@ -472,7 +564,7 @@ export default function AdminScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Icon name="arrow-left" size={20} color={colors.text} />
         </TouchableOpacity>
-        <View>
+        <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Admin-Bereich</Text>
           <Text style={styles.headerSubtitle}>
             Veranstaltungen und Benutzer verwalten

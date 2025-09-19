@@ -95,8 +95,20 @@ const CenteredAuthForm: React.FC<CenteredAuthFormProps> = ({ onAuthSuccess }) =>
       }
     } else {
       const result = await signUp(email, password, name, city);
-      if (result.success && onAuthSuccess) {
-        onAuthSuccess();
+      if (result.success) {
+        Alert.alert(
+          'Registrierung erfolgreich!',
+          'Bitte überprüfen Sie Ihre E-Mail und klicken Sie auf den Bestätigungslink, um Ihr Konto zu aktivieren.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setMode('login');
+                resetForm();
+              }
+            }
+          ]
+        );
       }
     }
   };
@@ -107,146 +119,144 @@ const CenteredAuthForm: React.FC<CenteredAuthFormProps> = ({ onAuthSuccess }) =>
   };
 
   return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-        >
-          <View style={styles.formContainer}>
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={styles.logoContainer}>
-                <Icon name="calendar" size={48} color={colors.primary} />
-              </View>
-              <Text style={styles.title}>Veranstaltungskalender</Text>
-              <Text style={styles.subtitle}>
-                {mode === 'login' 
-                  ? 'Melden Sie sich an, um fortzufahren' 
-                  : 'Erstellen Sie Ihr Konto'
-                }
-              </Text>
+        <View style={styles.formContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <Icon name="calendar" size={48} color={colors.primary} />
+            </View>
+            <Text style={styles.title}>Städtischer Veranstaltungskalender</Text>
+            <Text style={styles.subtitle}>
+              {mode === 'login' 
+                ? 'Melden Sie sich an, um Veranstaltungen zu verwalten' 
+                : 'Erstellen Sie Ihr Konto für den Veranstaltungskalender'
+              }
+            </Text>
+          </View>
+
+          {/* Form */}
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>E-Mail-Adresse</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="ihre.email@beispiel.de"
+                placeholderTextColor={colors.grey}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+              />
             </View>
 
-            {/* Form */}
-            <View style={styles.form}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>E-Mail</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="ihre.email@beispiel.de"
-                  placeholderTextColor={colors.grey}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                />
-              </View>
-
-              {mode === 'register' && (
-                <>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Name</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={name}
-                      onChangeText={setName}
-                      placeholder="Ihr vollständiger Name"
-                      placeholderTextColor={colors.grey}
-                      autoCapitalize="words"
-                      autoComplete="name"
-                    />
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Stadt</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={city}
-                      onChangeText={setCity}
-                      placeholder="Ihre Stadt"
-                      placeholderTextColor={colors.grey}
-                      autoCapitalize="words"
-                    />
-                  </View>
-                </>
-              )}
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Passwort</Text>
-                <View style={styles.passwordContainer}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Mindestens 6 Zeichen"
-                    placeholderTextColor={colors.grey}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeButton}
-                  >
-                    <Icon
-                      name={showPassword ? 'eye-off' : 'eye'}
-                      size={20}
-                      color={colors.grey}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {mode === 'register' && (
+            {mode === 'register' && (
+              <>
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Passwort bestätigen</Text>
+                  <Text style={styles.label}>Vollständiger Name</Text>
                   <TextInput
                     style={styles.input}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    placeholder="Passwort wiederholen"
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Max Mustermann"
                     placeholderTextColor={colors.grey}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="new-password"
+                    autoCapitalize="words"
+                    autoComplete="name"
                   />
                 </View>
-              )}
 
-              <TouchableOpacity
-                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-                onPress={handleSubmit}
-                disabled={loading}
-              >
-                <Text style={styles.submitButtonText}>
-                  {loading ? 'Wird verarbeitet...' : (mode === 'login' ? 'Anmelden' : 'Registrieren')}
-                </Text>
-              </TouchableOpacity>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Stadt</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={city}
+                    onChangeText={setCity}
+                    placeholder="Berlin"
+                    placeholderTextColor={colors.grey}
+                    autoCapitalize="words"
+                  />
+                </View>
+              </>
+            )}
 
-              <TouchableOpacity style={styles.switchButton} onPress={switchMode}>
-                <Text style={styles.switchButtonText}>
-                  {mode === 'login' 
-                    ? 'Noch kein Konto? Jetzt registrieren' 
-                    : 'Bereits ein Konto? Jetzt anmelden'
-                  }
-                </Text>
-              </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Passwort</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Mindestens 6 Zeichen"
+                  placeholderTextColor={colors.grey}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}
+                >
+                  <Icon
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color={colors.grey}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
+
+            {mode === 'register' && (
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Passwort bestätigen</Text>
+                <TextInput
+                  style={styles.input}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Passwort wiederholen"
+                  placeholderTextColor={colors.grey}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="new-password"
+                />
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              <Text style={styles.submitButtonText}>
+                {loading ? 'Wird verarbeitet...' : (mode === 'login' ? 'Anmelden' : 'Registrieren')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.switchButton} onPress={switchMode}>
+              <Text style={styles.switchButtonText}>
+                {mode === 'login' 
+                  ? 'Noch kein Konto? Jetzt registrieren' 
+                  : 'Bereits ein Konto? Jetzt anmelden'
+                }
+              </Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -255,69 +265,67 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 20,
-    minHeight: screenHeight - 100, // Ensure minimum height but allow scrolling
+    paddingVertical: 40,
+    minHeight: screenHeight - 100,
   },
   formContainer: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 24,
-    boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.3)',
-    elevation: 8,
+    borderRadius: 24,
+    padding: 32,
+    boxShadow: '0px 12px 48px rgba(0, 0, 0, 0.15)',
+    elevation: 12,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.primary + '20',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 22,
   },
   form: {
     width: '100%',
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 16,
     color: colors.text,
     backgroundColor: colors.backgroundAlt,
@@ -333,36 +341,36 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 16,
     color: colors.text,
   },
   eyeButton: {
-    padding: 12,
+    padding: 14,
   },
   submitButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   submitButtonDisabled: {
     opacity: 0.6,
   },
   submitButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
   },
   switchButton: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   switchButtonText: {
     color: colors.accent,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '500',
   },
 });

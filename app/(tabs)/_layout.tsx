@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { router } from 'expo-router';
 
 export default function TabLayout() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
 
   // If still loading, don't render anything
   if (loading) {
@@ -24,26 +24,26 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarInactiveTintColor: colors.text,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          paddingTop: 6,
-          paddingBottom: 6,
-          height: 56,
+          paddingTop: 8,
+          paddingBottom: 8,
+          height: 60,
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: '500',
-          marginTop: 2,
+          marginTop: 4,
         },
         tabBarIconStyle: {
-          marginTop: 2,
+          marginTop: 4,
         },
         headerShown: false,
       }}
@@ -75,16 +75,17 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="admin"
-        options={{
-          title: 'Admin',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="settings" size={size} color={color} />
-          ),
-          href: null, // Hide from tab bar by default
-        }}
-      />
+      {user?.isAdmin && (
+        <Tabs.Screen
+          name="admin"
+          options={{
+            title: 'Admin',
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="settings" size={size} color={color} />
+            ),
+          }}
+        />
+      )}
     </Tabs>
   );
 }
